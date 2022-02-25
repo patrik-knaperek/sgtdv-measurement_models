@@ -12,8 +12,7 @@ int main(int argc, char** argv)
     ros::NodeHandle handle;
 
     SensorCalibrationSynch synchObj;
-    synchObj.SetHandle(handle);
-
+    
     std::string fixedFrame;
     if (!handle.getParam("/fixed_frame", fixedFrame))
         ROS_ERROR("Failed to get parameter from server.\n");
@@ -23,6 +22,51 @@ int main(int argc, char** argv)
     if (!handle.getParam("/number_of_meassurements", dataSize))
         ROS_ERROR("Failed to get parameter from server.\n");
     synchObj.SetDataSize(dataSize);
+
+    float distTH;
+    if (!handle.getParam("/distance_treshold", distTH))
+        ROS_ERROR("Failed to get parameter from server.\n");
+    synchObj.SetDistTH(distTH);
+
+    // get real coords of cones from parameter server
+    Eigen::MatrixX2d realCoords = Eigen::RowVector2d::Zero(2);
+    XmlRpc::XmlRpcValue realCoordsParam;
+
+    try
+    {
+        if (!handle.getParam("/cone_coords", realCoordsParam))
+            ROS_ERROR("Failed to get parameter from server \n");
+
+        ROS_ASSERT(realCoordsParam.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+        for (int j = 0; j < 2; j++)
+        {
+            try
+            {
+                std::ostringstream ostr;
+                ostr << realCoordsParam[j];
+                std::istringstream istr(ostr.str());
+                istr >> realCoords(j);
+            }
+            catch(XmlRpc::XmlRpcException &e)
+            {
+                throw e;
+            }
+            catch(...)
+            {
+                throw;
+            }
+                
+        }
+    }
+    catch(XmlRpc::XmlRpcException &e)
+    {
+        ROS_ERROR_STREAM("ERROR reading from server: " <<
+                        e.getMessage() <<
+                        " for cones_coords (type: " <<
+                        realCoordsParam.getType() << ")");
+    }
+    synchObj.SetRealCoords(realCoords);
     
     std::string lidarTopicName;
     std::string cameraTopicName;

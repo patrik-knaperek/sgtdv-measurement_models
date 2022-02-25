@@ -18,24 +18,15 @@ class SensorCalibration
         SensorCalibration();
         ~SensorCalibration();
 
-        void Do(const Ref<const MatrixX2d> &data, std::string sensorName);
+        void Do(const Ref<const MatrixX2d> &meassuredCoords, const Ref<const RowVector2d> &realCoords, std::string sensorName);
+        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2);
 
         // Setters
-        void SetHandle(ros::NodeHandle handle) { m_handle = handle; };
-        void SetPublisher(ros::Publisher publisher) { m_logPublisher; };
+        void SetPublisher(ros::Publisher publisher) { m_logPublisher = publisher; };
         
     private:
-        void GetRealCoords();
-        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2);
         void meanAndCov(const Ref<const MatrixX2d> &obs, Ref<RowVector2d> mean, Ref<Matrix2d> cov);
         
-        std::string m_sensorName;
-
-        ros::NodeHandle m_handle;
         ros::Publisher m_logPublisher;
-
-        float m_distTH;
-        int m_conesCount;
-        MatrixX2d m_realCoords;
-        MatrixX2d m_meassuredCoords;
+        int m_counter;
 };

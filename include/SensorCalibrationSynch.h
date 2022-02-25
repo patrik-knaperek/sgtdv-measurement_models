@@ -10,6 +10,7 @@
 #include <geometry_msgs/PointStamped.h>
 
 #include <Eigen/Eigen>
+#include <XmlRpcException.h>
 
 #include <sgtdv_msgs/ConeArr.h>
 #include <sgtdv_msgs/Point2DArr.h>
@@ -26,19 +27,11 @@ class SensorCalibrationSynch
         ~SensorCalibrationSynch();
 
         // Setters
-        void SetPublisher(ros::Publisher pub) { m_calibration.SetPublisher(pub); };
-        void SetHandle(ros::NodeHandle handle) 
-        {
-            m_handle = handle;
-            m_calibration.SetHandle(handle);
-        };
+        void SetPublisher(ros::Publisher pub) { m_calibrationObj.SetPublisher(pub); };
         void SetFixedFrame(std::string fixedFrame) { m_fixedFrame = fixedFrame; };
-        void SetDataSize(int dataSize)
-        {
-            m_dataSize = dataSize;
-            m_cameraObs = Eigen::MatrixXd::Zero(m_dataSize,2);
-            m_lidarObs = Eigen::MatrixXd::Zero(m_dataSize,2);
-        }
+        void SetDataSize(int dataSize);
+        void SetDistTH(float distTH) { m_distTH = distTH; };
+        void SetRealCoords(const Ref<const RowVector2d> &realCoords) { m_realCoords = realCoords; };
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
         void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
@@ -46,18 +39,20 @@ class SensorCalibrationSynch
         
 
     private:
-        SensorCalibration m_calibration;
+        geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
+        
+        SensorCalibration m_calibrationObj;
         Eigen::MatrixXd m_cameraObs;
         Eigen::MatrixXd m_lidarObs;
 
-        ros::NodeHandle m_handle;
-        
         int m_dataSize;
         int m_cameraCount;
         int m_lidarCount;
 
         std::string m_fixedFrame;
 
-        tf::TransformListener m_listener;
+        float m_distTH;
+        RowVector2d m_realCoords;
 
+        tf::TransformListener m_listener;
 };
