@@ -1,0 +1,20 @@
+topic_name:
+  lidar: lidar_cones
+  camera: camera_cones
+  log: sensor_calibration
+
+fixed_frame: map
+base_frame: gotthard/base_link
+
+cones_count: 8
+cones_coords: [1.30756412599, -2.00853440227,
+               6.60553173798, -2.10659573386,
+               10.6508679116, -2.16344677819,
+               14.7333861309, -2.11369475386,
+               20.1120605551, -1.8063334567,
+               23.3328234818, -2.43684001124,
+               24.8983975182, -5.26129763703,
+               25.6774948144, -9.14927674265]
+
+number_of_meassurements: 1000
+distance_treshold: 0.5
