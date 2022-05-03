@@ -10,6 +10,7 @@ project(calibration)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  roslib
   std_msgs
   sgtdv_msgs
   tf

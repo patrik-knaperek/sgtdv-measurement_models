@@ -1,7 +1,6 @@
 topic_name:
   lidar: lidar_cones
   camera: camera_cones
-  log: sensor_calibration
 
 fixed_frame: gotthard/base_link
 
@@ -10,5 +9,8 @@ cone_coords: [
   6.60553173798, -2.10659573386,
 ]
 
-number_of_meassurements: 200
-distance_treshold: 0.3
+number_of_sensors: 2
+number_of_meassurements: 1000
+distance_treshold: 0.5
+
+output_filename: sensor_models

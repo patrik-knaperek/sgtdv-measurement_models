@@ -4,7 +4,6 @@
 /*****************************************************/
 
 #include "../include/SensorCalibrationSynch.h"
-#include <sgtdv_msgs/SensorCalibrationMsg.h>
 
 int main(int argc, char** argv)
 {
@@ -13,10 +12,16 @@ int main(int argc, char** argv)
 
     SensorCalibrationSynch synchObj;
     
+    // get parameters
     std::string fixedFrame;
     if (!handle.getParam("/fixed_frame", fixedFrame))
         ROS_ERROR("Failed to get parameter from server.\n");
     synchObj.SetFixedFrame(fixedFrame);
+
+    int numOfSensors;
+    if (!handle.getParam("/number_of_sensors", numOfSensors))
+        ROS_ERROR("Failed to get parameter from server.\n");
+    synchObj.SetNumOfSensors(numOfSensors);
 
     int dataSize;
     if (!handle.getParam("/number_of_meassurements", dataSize))
@@ -27,6 +32,11 @@ int main(int argc, char** argv)
     if (!handle.getParam("/distance_treshold", distTH))
         ROS_ERROR("Failed to get parameter from server.\n");
     synchObj.SetDistTH(distTH);
+
+    std::string outFilename;
+    if (!handle.getParam("/output_filename", outFilename))
+        ROS_ERROR("Failed to get parameter from server.\n");
+    synchObj.SetOutFilename(outFilename);
 
     // get real coords of cones from parameter server
     Eigen::MatrixX2d realCoords = Eigen::RowVector2d::Zero(2);
@@ -68,21 +78,19 @@ int main(int argc, char** argv)
     }
     synchObj.SetRealCoords(realCoords);
     
+
     std::string lidarTopicName;
     std::string cameraTopicName;
     std::string logTopicName;
 
+    // init topics
     if (!handle.getParam("/topic_name/lidar", lidarTopicName))
         ROS_ERROR("Failed to get parameter from server.\n");
     if (!handle.getParam("/topic_name/camera", cameraTopicName))
         ROS_ERROR("Failed to get parameter from server.\n");
-    if (!handle.getParam("topic_name/log", logTopicName))
-        ROS_ERROR("Failed to get parameter from server\n");
-
+    
     ros::Subscriber cameraSub = handle.subscribe(cameraTopicName, 1, &SensorCalibrationSynch::DoCamera, &synchObj);
     ros::Subscriber lidarSub = handle.subscribe(lidarTopicName, 1, &SensorCalibrationSynch::DoLidar, &synchObj);
-    ros::Publisher logPub = handle.advertise<sgtdv_msgs::SensorCalibrationMsg>(logTopicName, 1);
-    synchObj.SetPublisher(logPub);
 
     ros::spin();
 

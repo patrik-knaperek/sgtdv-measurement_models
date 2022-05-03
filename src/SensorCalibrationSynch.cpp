@@ -28,6 +28,8 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
 {
     int conesCount = msg->cones.size();
     if (conesCount == 0) return;
+
+    std::cout << "collected meassurements from camera: " << m_cameraCount << std::endl;
     
     if (m_cameraCount < m_dataSize)
     {
@@ -52,7 +54,7 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
             
             // data association
             Eigen::RowVector2d meassuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-            if (m_calibrationObj.euclidDist(m_realCoords, meassuredCoords) < m_distTH)
+            if (euclidDist(m_realCoords, meassuredCoords) < m_distTH)
             {
                 m_cameraObs.row(m_cameraCount) = meassuredCoords;
                 m_cameraCount++;
@@ -74,6 +76,8 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg
 {
     int pointsCount = msg->points.size();
     if (pointsCount == 0) return;
+
+    std::cout << "collected meassurements from lidar: " << m_lidarCount << std::endl;
     
     if (m_lidarCount < m_dataSize)
     {    
@@ -98,7 +102,7 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg
 
             // data association
             Eigen::RowVector2d meassuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-            if (m_calibrationObj.euclidDist(m_realCoords, meassuredCoords) < m_distTH)
+            if (euclidDist(m_realCoords, meassuredCoords) < m_distTH)
             {
                 m_lidarObs.row(m_lidarCount) = meassuredCoords;
                 m_lidarCount++;
@@ -112,6 +116,16 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg
             }
         }
     }
+}
+
+double SensorCalibrationSynch::euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2)
+{
+    Eigen::RowVector2d diff(2);
+    diff(0) = v1(0) - v2(0);
+    diff(1) = v1(1) - v2(1);
+
+    //std::cout << "\ndist: " << diff.norm() << std::endl;
+    return diff.norm();
 }
 
 geometry_msgs::PointStamped SensorCalibrationSynch::TransformCoords(geometry_msgs::PointStamped coordsChildFrame)

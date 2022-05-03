@@ -28,6 +28,9 @@ class SensorCalibrationSynch
 
         // Setters
         void SetPublisher(ros::Publisher pub) { m_calibrationObj.SetPublisher(pub); };
+        void SetOutFilename(std::string outFilename) { m_calibrationObj.SetOutFilename(outFilename); };
+        void SetNumOfSensors(int numOfSensors) { m_calibrationObj.SetNumOfSensors(numOfSensors); };
+
         void SetFixedFrame(std::string fixedFrame) { m_fixedFrame = fixedFrame; };
         void SetDataSize(int dataSize);
         void SetDistTH(float distTH) { m_distTH = distTH; };
@@ -35,6 +38,8 @@ class SensorCalibrationSynch
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
         void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
+
+        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2);
         
         
 
