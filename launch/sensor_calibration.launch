@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam command="load" file="$(find calibration)/params/sensor_calibration.yaml"/>
+    <rosparam command="load" file="$(find calibration)/params/sensor_calibration_rc.yaml"/>
 
     <node pkg="calibration" type="sensor_calibration" name="sensor_calibration" output="screen"/>
 </launch>

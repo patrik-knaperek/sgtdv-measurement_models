@@ -1,0 +1,15 @@
+topic_name:
+  lidar: lidar_cones
+  camera: camera_cones
+
+fixed_frame: base_link
+
+#cone_coords: [2, 0]
+cone_coords_x: 2.0
+
+number_of_cones: 5
+number_of_sensors: 1
+number_of_meassurements: 1000
+distance_treshold: 0.35
+
+output_filename: sensor_model

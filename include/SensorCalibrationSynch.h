@@ -15,10 +15,10 @@
 #include <sgtdv_msgs/ConeArr.h>
 #include <sgtdv_msgs/Point2DArr.h>
 
+#include <math.h>
+
 
 #include "../include/SensorCalibration.h"
-
-
 
 class SensorCalibrationSynch
 {
@@ -28,36 +28,39 @@ class SensorCalibrationSynch
 
         // Setters
         void SetPublisher(ros::Publisher pub) { m_calibrationObj.SetPublisher(pub); };
-        void SetOutFilename(std::string outFilename) { m_calibrationObj.SetOutFilename(outFilename); };
+        void InitOutFiles(std::string outFilename) { m_calibrationObj.InitOutFiles(outFilename); };
         void SetNumOfSensors(int numOfSensors) { m_calibrationObj.SetNumOfSensors(numOfSensors); };
 
         void SetFixedFrame(std::string fixedFrame) { m_fixedFrame = fixedFrame; };
-        void SetDataSize(int dataSize);
+        void SetDataSize(int numOfMeassurements, int numOfCones);
         void SetDistTH(float distTH) { m_distTH = distTH; };
-        void SetRealCoords(const Ref<const RowVector2d> &realCoords) { m_realCoords = realCoords; };
+        void SetRealCoords(const Ref<const MatrixX2d> &realCoords) { m_realCoords = realCoords; };
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
-        void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
-
-        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2);
-        
-        
+        void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);      
 
     private:
+        void Init();
         geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
+        int DataAssociation(const Ref<const RowVector2d> &meassuredCoords, Ref<MatrixXd> obsX,
+                            Ref<MatrixXd> obsY, Ref<RowVectorXi> obsCount);
+        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2); 
         
         SensorCalibration m_calibrationObj;
-        Eigen::MatrixXd m_cameraObs;
-        Eigen::MatrixXd m_lidarObs;
+        MatrixX2d m_realCoords;
+        MatrixXd m_cameraObsX;
+        MatrixXd m_cameraObsY;
+        MatrixXd m_lidarObsX;
+        MatrixXd m_lidarObsY;
 
-        int m_dataSize;
-        int m_cameraCount;
-        int m_lidarCount;
+        int m_numOfMeassurements;
+        int m_numOfCones;
+        RowVectorXi m_cameraCount;
+        RowVectorXi m_lidarCount;
 
         std::string m_fixedFrame;
 
         float m_distTH;
-        RowVector2d m_realCoords;
 
         tf::TransformListener m_listener;
 };

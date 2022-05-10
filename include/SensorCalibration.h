@@ -12,6 +12,8 @@
 #include <string>
 #include <Eigen/Core>
 
+#define EXPORT_AS_MATRIX_FILE
+
 using namespace Eigen;
 
 class SensorCalibration
@@ -25,14 +27,28 @@ class SensorCalibration
         // Setters
         void SetPublisher(ros::Publisher publisher) { m_logPublisher = publisher; };
         void SetNumOfSensors(int numOfSensors) { m_numOfSensors = numOfSensors; };
-        void SetOutFilename(std::string outFilename);
+        void SetNumOfCones(int numOfCones) { m_numOfCones = numOfCones; };
+        void InitOutFiles(std::string outFilename);
         
     private:
         void MeanAndCov(const Ref<const MatrixX2d> &obs, Ref<RowVector2d> mean, Ref<Matrix2d> cov);
-        void OpenFile(std::string path);
+        void WriteToFile(std::ofstream &paramFile, const Ref<const RowVector2d> &realCoords,
+                        const Ref<const RowVector2d> &mean,
+                        const Ref<const Matrix2d> &covariance
+                    #ifdef EXPORT_AS_MATRIX_FILE
+                        , std::ofstream &matrixFile
+                    #endif
+        );
         
         ros::Publisher m_logPublisher;
         int m_counter;
         int m_numOfSensors;
-        std::ofstream m_outFile;
+        int m_numOfCones;
+        std::ofstream m_outParamFileLid;
+        std::ofstream m_outParamFileCam;
+
+    #ifdef EXPORT_AS_MATRIX_FILE
+        std::ofstream m_outMatrixFileLid;
+        std::ofstream m_outMatrixFileCam;
+    #endif
 };
