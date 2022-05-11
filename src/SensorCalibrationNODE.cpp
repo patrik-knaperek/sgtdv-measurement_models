@@ -23,10 +23,13 @@ int main(int argc, char** argv)
         ROS_ERROR("Failed to get parameter from server.\n");
     synchObj.SetNumOfSensors(numOfSensors);
 
-    float distTH;
-    if (!handle.getParam("/distance_treshold", distTH))
+    float distTHx;
+    if (!handle.getParam("/distance_treshold_x", distTHx))
         ROS_ERROR("Failed to get parameter from server.\n");
-    synchObj.SetDistTH(distTH);
+    float distTHy;
+    if (!handle.getParam("/distance_treshold_y", distTHy))
+	    ROS_ERROR("Failed to get parameter from server.\n");
+    synchObj.SetDistTH(distTHx, distTHy);
 
     std::string outFilename;
     if (!handle.getParam("/output_filename", outFilename))
@@ -48,7 +51,8 @@ int main(int argc, char** argv)
 
     if (!handle.getParam("/cone_coords", realCoordsParam))
     {
-        float x;
+     	std::cout << "here" << std::endl;
+	float x;
         if (!handle.getParam("/cone_coords_x", x))
             ROS_ERROR("Failed to get parameter from server \n");
             
@@ -95,6 +99,7 @@ int main(int argc, char** argv)
                             realCoordsParam.getType() << ")");
         }
     }
+	std::cout << "real_coords:\n" << realCoords << std::endl;
     synchObj.SetRealCoords(realCoords);
     
 

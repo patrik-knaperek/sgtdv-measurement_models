@@ -33,7 +33,11 @@ class SensorCalibrationSynch
 
         void SetFixedFrame(std::string fixedFrame) { m_fixedFrame = fixedFrame; };
         void SetDataSize(int numOfMeassurements, int numOfCones);
-        void SetDistTH(float distTH) { m_distTH = distTH; };
+        void SetDistTH(float distTHx, float distTHy) 
+	{
+		m_distTHx = distTHx;
+		m_distTHy = distTHy;
+       	};
         void SetRealCoords(const Ref<const MatrixX2d> &realCoords) { m_realCoords = realCoords; };
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
@@ -44,7 +48,6 @@ class SensorCalibrationSynch
         geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
         int DataAssociation(const Ref<const RowVector2d> &meassuredCoords, Ref<MatrixXd> obsX,
                             Ref<MatrixXd> obsY, Ref<RowVectorXi> obsCount);
-        double euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2); 
         
         SensorCalibration m_calibrationObj;
         MatrixX2d m_realCoords;
@@ -60,7 +63,8 @@ class SensorCalibrationSynch
 
         std::string m_fixedFrame;
 
-        float m_distTH;
+        float m_distTHx;
+	float m_distTHy;
 
         tf::TransformListener m_listener;
 };

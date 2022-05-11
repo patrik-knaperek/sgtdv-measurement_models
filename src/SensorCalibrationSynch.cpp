@@ -139,7 +139,8 @@ int SensorCalibrationSynch::DataAssociation(const Ref<const RowVector2d> &meassu
     {
         if (obsCount(i) < m_numOfMeassurements)
         {
-            if (euclidDist(m_realCoords.row(i), meassuredCoords) < m_distTH)
+            if (abs(m_realCoords(i,0) - meassuredCoords(0)) < m_distTHx &&
+		abs(m_realCoords(i,1) - meassuredCoords(1)) < m_distTHy)
                 {   
                     obsX(obsCount(i),i) = meassuredCoords(0);
                     obsY(obsCount(i),i) = meassuredCoords(1);
@@ -149,14 +150,4 @@ int SensorCalibrationSynch::DataAssociation(const Ref<const RowVector2d> &meassu
         }
     }
     return -1;
-}
-
-double SensorCalibrationSynch::euclidDist(const Ref<const RowVector2d> &v1, const Ref<const RowVector2d> &v2)
-{
-    RowVector2d diff(2);
-    diff(0) = v1(0) - v2(0);
-    diff(1) = v1(1) - v2(1);
-
-    //std::cout << "\ndist: " << diff.norm() << std::endl;
-    return diff.norm();
 }

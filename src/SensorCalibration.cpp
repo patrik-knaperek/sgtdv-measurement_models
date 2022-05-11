@@ -73,6 +73,10 @@ void::SensorCalibration::WriteToFile(std::ofstream &paramFile, const Ref<const R
     matrixFile << realCoords(0) << "," << realCoords(1) << "," << mean(0) << ","
             << mean(1) << "," << covariance(0,0) << "," << covariance(1,1) << ";" << std::endl;
 #endif
+
+	std::cout << "meassured mean:\n" << mean << std::endl;
+    std::cout << "meassured covariance:\n" << covariance << std::endl;
+	std::cout << "mean offset:\n" << offset << std::endl;
 }
 
 // compute and publish mean, covariance of meassurement and distance between mean of meassurement 
@@ -80,17 +84,11 @@ void::SensorCalibration::WriteToFile(std::ofstream &paramFile, const Ref<const R
 void SensorCalibration::Do(const Ref<const MatrixX2d> &meassuredCoords, const Ref<const RowVector2d> &realCoords, std::string sensorName)
 {
     std::cout << "real coordinates:\n" << realCoords << std::endl;
-    std::cout << "meassured coords from " << sensorName << ": \n" << meassuredCoords << std::endl;
+    //std::cout << "meassured coords from " << sensorName << ": \n" << meassuredCoords << std::endl;
     
     RowVector2d mean(2);
     Matrix2d cov(2,2);
     MeanAndCov(meassuredCoords, mean, cov);
-    
-    std::cout << "meassured mean:\n" << mean << std::endl;
-    std::cout << "meassured covariance:\n" << cov << std::endl;
-
-    RowVector2d offset(2);
-    offset = realCoords - mean;
 
     // write to file
     if (sensorName.compare(std::string("lidar")) == 0)
