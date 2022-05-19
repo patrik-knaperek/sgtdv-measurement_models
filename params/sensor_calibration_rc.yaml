@@ -1,7 +1,3 @@
-topic_name:
-  lidar: lidar_cones
-  camera: camera_cones
-
 fixed_frame: camera_center
 
 #cone_coords: [
@@ -20,4 +16,4 @@ number_of_meassurements: 1000
 distance_treshold_x: 1.2
 distance_treshold_y: 0.45
 
-output_filename: sensor_model_skuska
+output_filename: sensor_model

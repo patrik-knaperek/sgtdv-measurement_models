@@ -1,7 +1,3 @@
-topic_name:
-  lidar: lidar_cones
-  camera: camera_cones
-
 fixed_frame: gotthard/base_link
 
 #cone_coords: [
@@ -11,11 +7,12 @@ fixed_frame: gotthard/base_link
 #  5, 1,
 #  5, 2
 #]
-cone_coords_x: 10.0
+cone_coords_x: 8.0
 
 number_of_cones: 5
-number_of_sensors: 1
+number_of_sensors: 2
 number_of_meassurements: 1000
-distance_treshold: 0.4
-
-output_filename: sensor_model_sim
+distance_treshold_x: 0.8
+distance_treshold_y: 0.5
+model_number: 2
+output_filename: sensor_model_sim_1

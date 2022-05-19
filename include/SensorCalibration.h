@@ -10,11 +10,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 
-#define EXPORT_AS_MATRIX_FILE
+#include "../../SGT_Macros.h"
 
-using namespace Eigen;
+#define N_OF_MODELS 2
 
 class SensorCalibration
 {
@@ -22,33 +22,47 @@ class SensorCalibration
         SensorCalibration();
         ~SensorCalibration();
 
-        void Do(const Ref<const MatrixX2d> &meassuredCoords, const Ref<const RowVector2d> &realCoords, std::string sensorName);
+        void Do(const Eigen::Ref<const Eigen::MatrixX2d> &meassuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
+                std::string sensorName);
         
         // Setters
         void SetPublisher(ros::Publisher publisher) { m_logPublisher = publisher; };
         void SetNumOfSensors(int numOfSensors) { m_numOfSensors = numOfSensors; };
         void SetNumOfCones(int numOfCones) { m_numOfCones = numOfCones; };
+        void SetModelNumber(int modelNumber) { m_modelNumber = modelNumber; };
         void InitOutFiles(std::string outFilename);
-        
+        void SetAvgValues(const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesCamera,
+                        const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesLidar)
+        {
+            m_avgValuesCam = avgValuesCamera;
+            m_avgValuesLid = avgValuesLidar;
+        };
+       
     private:
-        void MeanAndCov(const Ref<const MatrixX2d> &obs, Ref<RowVector2d> mean, Ref<Matrix2d> cov);
-        void WriteToFile(std::ofstream &paramFile, const Ref<const RowVector2d> &realCoords,
-                        const Ref<const RowVector2d> &mean,
-                        const Ref<const Matrix2d> &covariance
-                    #ifdef EXPORT_AS_MATRIX_FILE
-                        , std::ofstream &matrixFile
-                    #endif
-        );
+        void MeanAndCov(const Eigen::Ref<const Eigen::MatrixX2d> &obs, Eigen::Ref<Eigen::RowVector2d> mean, Eigen::Ref<Eigen::Matrix2d> cov);
+        void UpdateAvgValues(Eigen::Ref<Eigen::Array<double, N_OF_MODELS, 5>> avgValues, 
+                            const Eigen::Ref<const Eigen::RowVector2d> &realCoords, const Eigen::Ref<const Eigen::RowVector2d> &mean,
+                            const Eigen::Ref<const Eigen::Matrix2d> &covariance, int numOfNewMeassurements
+                        #ifdef SGT_EXPORT_DATA_CSV
+                            , std::ofstream &csvFile
+                        #endif
+                        );
+        void WriteToFile(std::ofstream &paramFile, const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValues);
         
         ros::Publisher m_logPublisher;
         int m_counter;
         int m_numOfSensors;
         int m_numOfCones;
-        std::ofstream m_outParamFileLid;
+        int m_modelNumber;
         std::ofstream m_outParamFileCam;
+        std::ofstream m_outParamFileLid;
 
-    #ifdef EXPORT_AS_MATRIX_FILE
-        std::ofstream m_outMatrixFileLid;
-        std::ofstream m_outMatrixFileCam;
+        // avgValues = [number_of_meassurements, average_offset_x, average_offset_y, covariance_xx, covariance_yy]
+        Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesCam;
+        Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesLid; 
+        
+    #ifdef SGT_EXPORT_DATA_CSV
+        std::ofstream m_outCsvFileLid;
+        std::ofstream m_outCsvFileCam;
     #endif
 };

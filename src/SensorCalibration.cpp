@@ -14,110 +14,155 @@ SensorCalibration::SensorCalibration()
 
 SensorCalibration::~SensorCalibration()
 {
-    m_outParamFileLid.close();
     m_outParamFileCam.close();
+    m_outParamFileLid.close();
 
-#ifdef EXPORT_AS_MATRIX_FILE
-    m_outMatrixFileLid.close();
-    m_outMatrixFileCam.close();
+#ifdef SGT_EXPORT_DATA_CSV
+    m_outCsvFileCam.close();
+    m_outCsvFileLid.close();
 #endif
 }
 
 void SensorCalibration::InitOutFiles(std::string outFilename)
 {
     std::string pathToPackage = ros::package::getPath("calibration");
-    std::string pathToParamFileLid = pathToPackage + std::string("/params/" + outFilename + "_lidar.yaml");
     std::string pathToParamFileCam = pathToPackage + std::string("/params/" + outFilename + "_camera.yaml");
+    std::string pathToParamFileLid = pathToPackage + std::string("/params/" + outFilename + "_lidar.yaml");
     
-    m_outParamFileLid.open(pathToParamFileLid, std::ios::app);
-    if (!m_outParamFileLid.is_open())
-        ROS_ERROR("Could not open file.\n");
-
-    m_outParamFileCam.open(pathToParamFileCam, std::ios::app);
+     m_outParamFileCam.open(pathToParamFileCam);
     if (!m_outParamFileCam.is_open())
-        ROS_ERROR("Could not open file.\n");
+        ROS_ERROR_STREAM("Could not open file " << pathToParamFileCam << std::endl);
 
+    m_outParamFileLid.open(pathToParamFileLid);
+    if (!m_outParamFileLid.is_open())
+        ROS_ERROR_STREAM("Could not open file " << pathToParamFileLid << std::endl);
     
-#ifdef EXPORT_AS_MATRIX_FILE
-    std::string pathToMatrixFileLid = pathToPackage + std::string("/data/" + outFilename + "_lidar.txt");
-    std::string pathToMatrixFileCam = pathToPackage + std::string("/data/" + outFilename + "_camera.txt");
+#ifdef SGT_EXPORT_DATA_CSV
+    std::string pathToMatrixFileCam = pathToPackage + std::string("/data/" + outFilename + "_camera.csv");
+    std::string pathToMatrixFileLid = pathToPackage + std::string("/data/" + outFilename + "_lidar.csv");
+    
+    m_outCsvFileCam.open(pathToMatrixFileCam, std::ios::app);
+    if (!m_outCsvFileCam.is_open())
+        ROS_ERROR_STREAM("Could not open file " << pathToMatrixFileCam << std::endl);
 
-    m_outMatrixFileLid.open(pathToMatrixFileLid, std::ios::app);
-    if (!m_outMatrixFileLid.is_open())
-        ROS_ERROR("Could not open file.\n");
-
-    m_outMatrixFileCam.open(pathToMatrixFileCam, std::ios::app);
-    if (!m_outMatrixFileCam.is_open())
-        ROS_ERROR("Could not open file.\n");
-#endif // EXPORT_AS_MATRIX_FILE
+    m_outCsvFileLid.open(pathToMatrixFileLid, std::ios::app);
+    if (!m_outCsvFileLid.is_open())
+        ROS_ERROR_STREAM("Could not open file " << pathToMatrixFileLid << std::endl);
+#endif // SGT_EXPORT_DATA_CSV
 }
 
-void::SensorCalibration::WriteToFile(std::ofstream &paramFile, const Ref<const RowVector2d> &realCoords,
-                                    const Ref<const RowVector2d> &mean,
-                                    const Ref<const Matrix2d> &covariance
-                                #ifdef EXPORT_AS_MATRIX_FILE
-                                    , std::ofstream &matrixFile
-                                #endif
-)
-{
-    paramFile << "\n\nreal_coords_x" << realCoords(0) << "_y" << realCoords(1) << ":\n";
-    paramFile << "  meassured_mean: [" << mean(0) << ", " << mean(1) << "]\n";
-    RowVector2d offset(2);
-    offset = realCoords - mean;
-    paramFile << "  offset: [" << offset(0) << ", " << offset(1) << "]\n";
-    paramFile << "  meassured_covariance: [" << covariance(0,0) << ", " << covariance(0,1) 
-                                    << ", " << covariance(1,0) << ", " << covariance(1,1) << "]\n\n";
-
-#ifdef EXPORT_AS_MATRIX_FILE
-    // fill matrix row (Matlab format)
-    matrixFile << realCoords(0) << "," << realCoords(1) << "," << mean(0) << ","
-            << mean(1) << "," << covariance(0,0) << "," << covariance(1,1) << ";" << std::endl;
-#endif
-
-	std::cout << "meassured mean:\n" << mean << std::endl;
-    std::cout << "meassured covariance:\n" << covariance << std::endl;
-	std::cout << "mean offset:\n" << offset << std::endl;
-}
-
-// compute and publish mean, covariance of meassurement and distance between mean of meassurement 
+// compute and export mean, covariance of meassurement and distance between mean of meassurement 
 // and real coordinates for each cone
-void SensorCalibration::Do(const Ref<const MatrixX2d> &meassuredCoords, const Ref<const RowVector2d> &realCoords, std::string sensorName)
+void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &meassuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
+                        std::string sensorName)
 {
-    std::cout << "real coordinates:\n" << realCoords << std::endl;
-    //std::cout << "meassured coords from " << sensorName << ": \n" << meassuredCoords << std::endl;
-    
-    RowVector2d mean(2);
-    Matrix2d cov(2,2);
+    Eigen::RowVector2d mean(2);
+    Eigen::Matrix2d cov(2,2);
     MeanAndCov(meassuredCoords, mean, cov);
 
-    // write to file
-    if (sensorName.compare(std::string("lidar")) == 0)
-    {
-        WriteToFile(m_outParamFileLid, realCoords, mean, cov
-            #ifdef EXPORT_AS_MATRIX_FILE
-                , m_outMatrixFileLid
-            #endif
-            );
-    }
-    else if (sensorName.compare(std::string("camera")) == 0)
-    {
-        WriteToFile(m_outParamFileCam, realCoords, mean, cov
-            #ifdef EXPORT_AS_MATRIX_FILE
-                , m_outMatrixFileCam
-            #endif
-            );
-    }
+
+    // update average values of sensor models
     
+    if (sensorName.compare(std::string("camera")) == 0)
+    {
+        UpdateAvgValues(m_avgValuesCam, realCoords, mean, cov, meassuredCoords.rows()
+            #ifdef SGT_EXPORT_DATA_CSV
+                , m_outCsvFileCam
+            #endif
+            );
+    }
+    else if (sensorName.compare(std::string("lidar")) == 0)
+    {
+        UpdateAvgValues(m_avgValuesLid, realCoords, mean, cov, meassuredCoords.rows()
+            #ifdef SGT_EXPORT_DATA_CSV
+                , m_outCsvFileLid
+            #endif
+            );
+    }
+
     // calibration completed
     if (++m_counter >= m_numOfSensors * m_numOfCones)
     {
+        // write to parameter files
+        m_outParamFileCam << "camera:" << std::endl;
+        WriteToFile(m_outParamFileCam, m_avgValuesCam);
+
+        m_outParamFileLid << "lidar:" << std::endl;
+        WriteToFile(m_outParamFileLid, m_avgValuesLid);
+        
         ros::shutdown();
     } 
 }
 
-void SensorCalibration::MeanAndCov(const Ref<const MatrixX2d> &obs, Ref<RowVector2d> mean, Ref<Matrix2d> cov)
+void SensorCalibration::MeanAndCov(const Eigen::Ref<const Eigen::MatrixX2d> &obs, Eigen::Ref<Eigen::RowVector2d> mean,
+                                    Eigen::Ref<Eigen::Matrix2d> cov)
 {
     const double obsNum = static_cast<double>(obs.rows());
     mean = obs.colwise().sum() / obsNum;
     cov = (obs.rowwise() - mean).transpose() * (obs.rowwise() - mean) / (obsNum - 1);
+}
+
+void SensorCalibration::UpdateAvgValues(Eigen::Ref<Eigen::Array<double, N_OF_MODELS, 5>> avgValues, 
+                            const Eigen::Ref<const Eigen::RowVector2d> &realCoords, const Eigen::Ref<const Eigen::RowVector2d> &mean,
+                            const Eigen::Ref<const Eigen::Matrix2d> &covariance, int numOfNewMeassurements
+                        #ifdef SGT_EXPORT_DATA_CSV
+                            , std::ofstream &csvFile
+                        #endif
+                        )
+{
+    Eigen::RowVector2d offset = realCoords - mean;
+
+#ifdef SGT_EXPORT_DATA_CSV
+    // fill matrix row (CSV format)
+    csvFile << realCoords(0) << "," << realCoords(1) << "," << mean(0) << ","
+            << mean(1) << "," << offset(0) << "," << offset(1) << "," 
+            << covariance(0,0) << covariance(1,1) << ";" << std::endl;
+#endif
+    
+    double N = avgValues(m_modelNumber, 0) + 1;
+    // offset x, y
+    avgValues.block<1, 2>(m_modelNumber, 1).array() *= avgValues(m_modelNumber, 0);
+    avgValues.block<1, 2>(m_modelNumber, 1).rowwise() += offset.array();
+    avgValues.block<1, 2>(m_modelNumber, 1).array() /= N;
+    
+    // covariance xx, yy
+    avgValues.block<1, 2>(m_modelNumber, 3).array() *= avgValues(m_modelNumber, 0);
+    avgValues(m_modelNumber, 3) += covariance(0,0);
+    avgValues(m_modelNumber, 4) += covariance(1,1);
+    avgValues.block<1, 2>(m_modelNumber, 3).array() /= N;
+
+    avgValues(m_modelNumber, 0) = N;
+}
+
+// export to YAML file
+void::SensorCalibration::WriteToFile(std::ofstream &paramFile, const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValues)
+{
+    paramFile << "  number_of_meassurements: [";
+    for (int i = 0; i < N_OF_MODELS; i++)
+    {
+        paramFile << avgValues(i, 0) << ", ";
+    } 
+    paramFile << "]\n";
+    
+    paramFile << "  offset: [";
+    for (int i = 0; i < N_OF_MODELS; i++)
+    {
+        paramFile << "\n    ";
+        for (int j = 0; j < 2; j++)
+        {
+            paramFile << avgValues(i, j + 1) << ", ";
+        }
+    }
+    paramFile << "\n  ]\n";
+    
+    paramFile << "  covariance: [";
+    for (int i = 0; i < N_OF_MODELS; i++)
+    {
+        paramFile << "\n    ";
+        for (int j = 0; j < 2; j++)
+        {
+            paramFile << avgValues(i, j + 3) << ", ";
+        }
+    }
+    paramFile << "\n  ]";
 }

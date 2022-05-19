@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
     <rosparam command="load" file="$(find calibration)/params/sensor_calibration_rc.yaml"/>
+    <rosparam command="load" file="$(find calibration)/params/sensor_model_camera.yaml"/>
+    <rosparam command="load" file="$(find calibration)/params/sensor_model_lidar.yaml"/>
 
     <node pkg="calibration" type="sensor_calibration" name="sensor_calibration" output="screen"/>
 
