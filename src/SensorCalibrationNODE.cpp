@@ -41,8 +41,8 @@ int main(int argc, char** argv)
     
     // get real coords of cones from parameter server
     int numOfMeassurements;
-    if (!handle.getParam("/number_of_meassurements", numOfMeassurements))
-        ROS_ERROR("Failed to get parameter \"/number_of_meassurements\" from server.\n");
+    if (!handle.getParam("/number_of_measurements", numOfMeassurements))
+        ROS_ERROR("Failed to get parameter \"/number_of_measurements\" from server.\n");
     
     int numOfCones;
     if (!handle.getParam("/number_of_cones", numOfCones))
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     synchObj.SetModelNumber(--modelNumber);
 
     Eigen::Array<double, N_OF_MODELS, 5> avgValuesCam = Eigen::Array<double, N_OF_MODELS, 5>::Zero();
-    avgValuesCam.block<N_OF_MODELS, 1>(0, 0) = readArray(handle, std::string("/camera/number_of_meassurements"), N_OF_MODELS, 1);
+    avgValuesCam.block<N_OF_MODELS, 1>(0, 0) = readArray(handle, std::string("/camera/number_of_measurements"), N_OF_MODELS, 1);
     if (avgValuesCam(0, 0) != 0.0)
     {
         avgValuesCam.block<N_OF_MODELS, 2>(0, 1) = readArray(handle, std::string("/camera/offset"), N_OF_MODELS, 2);
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     }
 
     Eigen::Array<double, N_OF_MODELS, 5> avgValuesLid = Eigen::Array<double, N_OF_MODELS, 5>::Zero();
-    avgValuesLid.block<N_OF_MODELS, 1>(0, 0) = readArray(handle, std::string("/lidar/number_of_meassurements"), N_OF_MODELS, 1);
+    avgValuesLid.block<N_OF_MODELS, 1>(0, 0) = readArray(handle, std::string("/lidar/number_of_measurements"), N_OF_MODELS, 1);
     if (avgValuesLid(0, 0) != 0.0)
     {
         avgValuesLid.block<N_OF_MODELS, 2>(0, 1) = readArray(handle, std::string("/lidar/offset"), N_OF_MODELS, 2);

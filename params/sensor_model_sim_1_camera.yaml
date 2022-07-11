@@ -1,5 +1,5 @@
 camera:
-  number_of_meassurements: [15, 20, ]
+  number_of_measurements: [15, 20, ]
   offset: [
     -0.539556, -0.017505, 
     -0.584873, -0.0353828, 

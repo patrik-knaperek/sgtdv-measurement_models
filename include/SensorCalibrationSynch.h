@@ -51,7 +51,7 @@ class SensorCalibrationSynch
     private:
         void Init();
         geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
-        int DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &meassuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
+        int DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
                             Eigen::Ref<Eigen::MatrixXd> obsY, Eigen::Ref<Eigen::RowVectorXi> obsCount);
         
         SensorCalibration m_calibrationObj;

@@ -22,7 +22,7 @@ class SensorCalibration
         SensorCalibration();
         ~SensorCalibration();
 
-        void Do(const Eigen::Ref<const Eigen::MatrixX2d> &meassuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
+        void Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
                 std::string sensorName);
         
         // Setters
@@ -57,7 +57,7 @@ class SensorCalibration
         std::ofstream m_outParamFileCam;
         std::ofstream m_outParamFileLid;
 
-        // avgValues = [number_of_meassurements, average_offset_x, average_offset_y, covariance_xx, covariance_yy]
+        // avgValues := [number_of_measurements, average_offset_x, average_offset_y, covariance_xx, covariance_yy]
         Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesCam;
         Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesLid; 
         

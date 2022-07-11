@@ -12,7 +12,7 @@ cone_coords_x: 4.0
 
 number_of_cones: 5
 number_of_sensors: 1
-number_of_meassurements: 1000
+number_of_measurements: 1000
 distance_treshold_x: 1.2
 distance_treshold_y: 0.45
 

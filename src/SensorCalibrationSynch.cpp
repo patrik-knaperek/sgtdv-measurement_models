@@ -36,13 +36,13 @@ void SensorCalibrationSynch::Init()
     m_lidarCount = Eigen::RowVectorXi::Zero(m_numOfCones);
 }
 
-// get meassurement from camera
+// get measurement from camera
 void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
 {
     int msgSize = msg->cones.size();
     if (msgSize == 0) return;
 
-    std::cout << "collected meassurements from camera: " << m_cameraCount << std::endl;
+    std::cout << "collected measurements from camera: " << m_cameraCount << std::endl;
     
     geometry_msgs::PointStamped coordsMsgFrame = geometry_msgs::PointStamped();
     geometry_msgs::PointStamped coordsFixedFrame = geometry_msgs::PointStamped();
@@ -64,27 +64,27 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
             coordsFixedFrame = TransformCoords(coordsMsgFrame);
             
         // data association
-        Eigen::RowVector2d meassuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-        int idx = DataAssociation(meassuredCoords, m_cameraObsX, m_cameraObsY, m_cameraCount);
+        Eigen::RowVector2d measuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
+        int idx = DataAssociation(measuredCoords, m_cameraObsX, m_cameraObsY, m_cameraCount);
         if (idx < 0) continue;
 
         if (m_cameraCount(idx) >= m_numOfMeassurements)
         { 
-            Eigen::MatrixX2d meassurementSet(m_numOfMeassurements,2);
-            meassurementSet.col(0) = m_cameraObsX.col(idx);
-            meassurementSet.col(1) = m_cameraObsY.col(idx);
-            m_calibrationObj.Do(meassurementSet, m_realCoords.row(idx), "camera");
+            Eigen::MatrixX2d measurementSet(m_numOfMeassurements,2);
+            measurementSet.col(0) = m_cameraObsX.col(idx);
+            measurementSet.col(1) = m_cameraObsY.col(idx);
+            m_calibrationObj.Do(measurementSet, m_realCoords.row(idx), "camera");
         }
     }
 }
 
-// get meassurement from lidar
+// get measurement from lidar
 void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
 {
     int msgSize = msg->points.size();
     if (msgSize == 0) return;
 
-    std::cout << "collected meassurements from lidar: " << m_lidarCount << std::endl;
+    std::cout << "collected measurements from lidar: " << m_lidarCount << std::endl;
        
     geometry_msgs::PointStamped coordsMsgFrame = geometry_msgs::PointStamped();
     geometry_msgs::PointStamped coordsFixedFrame = geometry_msgs::PointStamped();
@@ -106,16 +106,16 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg
             coordsFixedFrame = coordsMsgFrame;
 
         // data association
-        Eigen::RowVector2d meassuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-        int idx = DataAssociation(meassuredCoords, m_lidarObsX, m_lidarObsY, m_lidarCount);
+        Eigen::RowVector2d measuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
+        int idx = DataAssociation(measuredCoords, m_lidarObsX, m_lidarObsY, m_lidarCount);
         if (idx < 0) continue;
             
         if (m_lidarCount(idx) >= m_numOfMeassurements)
         {
-            Eigen::MatrixX2d meassurementSet(m_numOfMeassurements,2);
-            meassurementSet.col(0) = m_lidarObsX.col(idx);
-            meassurementSet.col(1) = m_lidarObsY.col(idx);
-            m_calibrationObj.Do(meassurementSet, m_realCoords.row(idx), "lidar");
+            Eigen::MatrixX2d measurementSet(m_numOfMeassurements,2);
+            measurementSet.col(0) = m_lidarObsX.col(idx);
+            measurementSet.col(1) = m_lidarObsY.col(idx);
+            m_calibrationObj.Do(measurementSet, m_realCoords.row(idx), "lidar");
         }
     }
 }
@@ -134,18 +134,18 @@ geometry_msgs::PointStamped SensorCalibrationSynch::TransformCoords(geometry_msg
     return coordsParentFrame;
 }
 
-int SensorCalibrationSynch::DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &meassuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
+int SensorCalibrationSynch::DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
                                             Eigen::Ref<Eigen::MatrixXd> obsY, Eigen::Ref<Eigen::RowVectorXi> obsCount)
 {
     for (int i = 0; i < m_numOfCones; i++)
     {
         if (obsCount(i) < m_numOfMeassurements)
         {
-            if (abs(m_realCoords(i,0) - meassuredCoords(0)) < m_distTHx &&
-		        abs(m_realCoords(i,1) - meassuredCoords(1)) < m_distTHy)
+            if (abs(m_realCoords(i,0) - measuredCoords(0)) < m_distTHx &&
+		        abs(m_realCoords(i,1) - measuredCoords(1)) < m_distTHy)
             {   
-                obsX(obsCount(i),i) = meassuredCoords(0);
-                obsY(obsCount(i),i) = meassuredCoords(1);
+                obsX(obsCount(i),i) = measuredCoords(0);
+                obsY(obsCount(i),i) = measuredCoords(1);
                 obsCount(i)++;
                 return i;
             }

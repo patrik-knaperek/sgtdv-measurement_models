@@ -51,21 +51,21 @@ void SensorCalibration::InitOutFiles(std::string outFilename)
 #endif // SGT_EXPORT_DATA_CSV
 }
 
-// compute and export mean, covariance of meassurement and distance between mean of meassurement 
+// compute and export mean, covariance of measurement and distance between mean of measurement 
 // and real coordinates for each cone
-void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &meassuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
+void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
                         std::string sensorName)
 {
     Eigen::RowVector2d mean(2);
     Eigen::Matrix2d cov(2,2);
-    MeanAndCov(meassuredCoords, mean, cov);
+    MeanAndCov(measuredCoords, mean, cov);
 
 
     // update average values of sensor models
     
     if (sensorName.compare(std::string("camera")) == 0)
     {
-        UpdateAvgValues(m_avgValuesCam, realCoords, mean, cov, meassuredCoords.rows()
+        UpdateAvgValues(m_avgValuesCam, realCoords, mean, cov, measuredCoords.rows()
             #ifdef SGT_EXPORT_DATA_CSV
                 , m_outCsvFileCam
             #endif
@@ -73,7 +73,7 @@ void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &meassuredCo
     }
     else if (sensorName.compare(std::string("lidar")) == 0)
     {
-        UpdateAvgValues(m_avgValuesLid, realCoords, mean, cov, meassuredCoords.rows()
+        UpdateAvgValues(m_avgValuesLid, realCoords, mean, cov, measuredCoords.rows()
             #ifdef SGT_EXPORT_DATA_CSV
                 , m_outCsvFileLid
             #endif
@@ -116,7 +116,7 @@ void SensorCalibration::UpdateAvgValues(Eigen::Ref<Eigen::Array<double, N_OF_MOD
     // fill matrix row (CSV format)
     csvFile << realCoords(0) << "," << realCoords(1) << "," << mean(0) << ","
             << mean(1) << "," << offset(0) << "," << offset(1) << "," 
-            << covariance(0,0) << covariance(1,1) << ";" << std::endl;
+            << covariance(0,0) << "," << covariance(1,1) << ";" << std::endl;
 #endif
     
     double N = avgValues(m_modelNumber, 0) + 1;
@@ -137,7 +137,7 @@ void SensorCalibration::UpdateAvgValues(Eigen::Ref<Eigen::Array<double, N_OF_MOD
 // export to YAML file
 void::SensorCalibration::WriteToFile(std::ofstream &paramFile, const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValues)
 {
-    paramFile << "  number_of_meassurements: [";
+    paramFile << "  number_of_measurements: [";
     for (int i = 0; i < N_OF_MODELS; i++)
     {
         paramFile << avgValues(i, 0) << ", ";

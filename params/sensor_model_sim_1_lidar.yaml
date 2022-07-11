@@ -1,5 +1,5 @@
 lidar:
-  number_of_meassurements: [15, 20, ]
+  number_of_measurements: [15, 20, ]
   offset: [
     -0.179899, -0.00320078, 
     -0.195142, -0.00670272, 

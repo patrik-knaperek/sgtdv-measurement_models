@@ -11,8 +11,8 @@ cone_coords_x: 8.0
 
 number_of_cones: 5
 number_of_sensors: 2
-number_of_meassurements: 1000
+number_of_measurements: 1000
 distance_treshold_x: 0.8
 distance_treshold_y: 0.5
 model_number: 2
-output_filename: sensor_model_sim_1
+output_filename: sensor_model_sim_2
