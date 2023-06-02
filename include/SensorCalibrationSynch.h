@@ -27,15 +27,22 @@ class SensorCalibrationSynch
         struct CalibrationSynchParams
         {
             std::string fixedFrame;
-            int numOfMeasurements;
+            int sizeOfSet;
             int numOfCones;
+
             float distTHx;
             float distTHy;
             Eigen::MatrixXd realCoords;
+
         };
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
-        void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);      
+        void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
+
+        void SetClusterPub(const ros::Publisher &cluster_pub)
+        {
+            m_calibrationObj.SetClusterPub(cluster_pub);
+        };
 
     private:
         void LoadParams(const ros::NodeHandle &nh);
@@ -58,22 +65,13 @@ class SensorCalibrationSynch
             }
             return true;
         };
-        Eigen::ArrayXXd readArray(const ros::NodeHandle &handle, const std::string &paramName, int rows, int cols);
+        Eigen::ArrayXXd readArray(const ros::NodeHandle &handle, const std::string &paramName, const int rows, const int cols) const;
         
-        void Init();
-        geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
-        int DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
-                            Eigen::Ref<Eigen::MatrixXd> obsY, Eigen::Ref<Eigen::RowVectorXi> obsCount);
+        geometry_msgs::PointStamped TransformCoords(const geometry_msgs::PointStamped &coordsChildFrame) const;
+        bool DataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords) const;
         
         SensorCalibration m_calibrationObj;
         CalibrationSynchParams m_params;
-        Eigen::MatrixXd m_cameraObsX;
-        Eigen::MatrixXd m_cameraObsY;
-        Eigen::MatrixXd m_lidarObsX;
-        Eigen::MatrixXd m_lidarObsY;
-
-        Eigen::RowVectorXi m_cameraCount;
-        Eigen::RowVectorXi m_lidarCount;
-
+        
         tf::TransformListener m_listener;
 };
