@@ -21,55 +21,59 @@
 class SensorCalibrationSynch
 {
     public:
-        SensorCalibrationSynch();
-        ~SensorCalibrationSynch();
+        SensorCalibrationSynch(const ros::NodeHandle &nh);
+        ~SensorCalibrationSynch() = default;
 
-        // Pass through
-        void SetPublisher(ros::Publisher pub) { m_calibrationObj.SetPublisher(pub); };
-        void InitOutFiles(std::string outFilename) { m_calibrationObj.InitOutFiles(outFilename); };
-        void SetNumOfSensors(int numOfSensors) { m_calibrationObj.SetNumOfSensors(numOfSensors); };
-        void SetAvgValues(const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesCamera,
-                        const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesLidar)
+        struct CalibrationSynchParams
         {
-            m_calibrationObj.SetAvgValues(avgValuesCamera, avgValuesLidar);
+            std::string fixedFrame;
+            int numOfMeasurements;
+            int numOfCones;
+            float distTHx;
+            float distTHy;
+            Eigen::MatrixXd realCoords;
         };
-        void SetModelNumber(int modelNumber) { m_calibrationObj.SetModelNumber(modelNumber); };
-        
-        // Setters
-        void SetFixedFrame(std::string fixedFrame) { m_fixedFrame = fixedFrame; };
-        void SetDataSize(int numOfMeassurements, int numOfCones);
-        void SetDistTH(float distTHx, float distTHy) 
-	{
-		m_distTHx = distTHx;
-		m_distTHy = distTHy;
-       	};
-        void SetRealCoords(const Eigen::Ref<const Eigen::MatrixX2d> &realCoords) { m_realCoords = realCoords; };
 
         void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
         void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);      
 
     private:
+        void LoadParams(const ros::NodeHandle &nh);
+        template<typename T> bool loadParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const
+        {
+            if (!handle.getParam(name, *storage))
+            {
+                ROS_ERROR("Failed to get parameter \"%s\" from server\n", name.data());
+                return false;
+            }
+            return true;
+        };
+        template<typename T> bool loadParam(const ros::NodeHandle &handle, const std::string &name,
+                                        const T &defaultValue, T* storage) const
+        {
+            if (!handle.param<T>(name, *storage, defaultValue))
+            {
+                ROS_WARN_STREAM("Failed to get parameter " << name.data() << " from server, setting default: " << defaultValue);
+                return false;
+            }
+            return true;
+        };
+        Eigen::ArrayXXd readArray(const ros::NodeHandle &handle, const std::string &paramName, int rows, int cols);
+        
         void Init();
         geometry_msgs::PointStamped TransformCoords(geometry_msgs::PointStamped coordsChildFrame);
         int DataAssociation(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords, Eigen::Ref<Eigen::MatrixXd> obsX,
                             Eigen::Ref<Eigen::MatrixXd> obsY, Eigen::Ref<Eigen::RowVectorXi> obsCount);
         
         SensorCalibration m_calibrationObj;
-        Eigen::MatrixX2d m_realCoords;
+        CalibrationSynchParams m_params;
         Eigen::MatrixXd m_cameraObsX;
         Eigen::MatrixXd m_cameraObsY;
         Eigen::MatrixXd m_lidarObsX;
         Eigen::MatrixXd m_lidarObsY;
 
-        int m_numOfMeassurements;
-        int m_numOfCones;
         Eigen::RowVectorXi m_cameraCount;
         Eigen::RowVectorXi m_lidarCount;
-
-        std::string m_fixedFrame;
-
-        float m_distTHx;
-	    float m_distTHy;
 
         tf::TransformListener m_listener;
 };

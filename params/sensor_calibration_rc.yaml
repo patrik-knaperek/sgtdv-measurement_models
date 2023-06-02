@@ -1,19 +1,21 @@
 fixed_frame: camera_center
 
-#cone_coords: [
-#        8, -2,       
-#        8, -1,
-#        8, 0,
-#        8, 1,
-#        8, 2
-#]
+# cone_coords: [
+#         9, 0,       
+#         9, 1,
+#         9, 2,
+#         9, 3,
+#         9, 4,
+#         9, 5
+# ]
 
 cone_coords_x: 4.0
+cone_coords_y_max: 5.0
+cone_coords_y_min: -5.0
 
-number_of_cones: 5
+number_of_cones: 11
 number_of_sensors: 1
 number_of_measurements: 1000
-distance_treshold_x: 1.2
-distance_treshold_y: 0.45
-
+distance_treshold_x: 2.0
+distance_treshold_y: 0.4999
 output_filename: sensor_model
