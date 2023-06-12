@@ -1,22 +1,28 @@
-#fixed_frame: camera_center
-fixed_frame: lidar
+fixed_frame: camera_center
+#fixed_frame: lidar
 
 # cone_coords: [
-#         9, 0,       
-#         9, 1,
-#         9, 2,
-#         9, 3,
-#         9, 4,
-#         9, 5
+#          9.0, 0.0,       
+#          9.0, 1.0,
+#          9.0, 2.0,
+#          9.0, 3.0,
+#          9.0, 4.0,
+#          9.0, 5.01
 # ]
 
-cone_coords_x: 4.0
-cone_coords_y_max: 0
-cone_coords_y_min: -5.0
+cone_coords_x: 2.0
+cone_coords_y: [
+    0.0, 
+    1.0, 
+    2.0, 
+    # 3.0, 
+    # 4.0, 
+    # 5.01
+    ]
 
-number_of_cones: 6
+number_of_cones: 3
 number_of_sensors: 1
-number_of_measurements: 1000
+number_of_measurements: 600
 distance_treshold_x: 1.0
-distance_treshold_y: 1.0
+distance_treshold_y: 0.7
 output_filename: sensor_model

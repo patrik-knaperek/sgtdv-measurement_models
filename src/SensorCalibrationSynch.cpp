@@ -26,14 +26,16 @@ void SensorCalibrationSynch::LoadParams(const ros::NodeHandle &nh)
     float x;
     if (loadParam(nh, "/cone_coords_x", &x))
     {
-     	float y_max, y_min;
-        loadParam(nh, "/cone_coords_y_max", &y_max);
-        loadParam(nh, "/cone_coords_y_min", &y_min);
-        for (int i = 0; i < y_max - y_min + 1; i++)
-        {
-            m_params.realCoords(i,0) = x;
-            m_params.realCoords(i,1) = y_min + i;
-        }
+     	m_params.realCoords.col(0).setConstant(x);
+         m_params.realCoords.col(1) = readArray(nh, "/cone_coords_y", numOfCones,1);
+        // float y_max, y_min;
+        // loadParam(nh, "/cone_coords_y_max", &y_max);
+        // loadParam(nh, "/cone_coords_y_min", &y_min);
+        // for (int i = 0; i < y_max - y_min + 1; i++)
+        // {
+        //     m_params.realCoords(i,0) = x;
+        //     m_params.realCoords(i,1) = y_min + i;
+        // }
     }
     else
     {
