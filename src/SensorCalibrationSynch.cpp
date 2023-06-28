@@ -106,7 +106,7 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
     static int count = 0;
 
     int msgSize = msg->cones.size();
-    if (msgSize == 0) return;
+    if (msgSize == 0 || count >= m_params.sizeOfSet) return;
 
     std::cout << "collected measurements from camera: " << count << std::endl;
     
@@ -148,7 +148,7 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg
     static int count = 0;
     
     int msgSize = msg->points.size();
-    if (msgSize == 0) return;
+    if (msgSize == 0 || count >= m_params.sizeOfSet) return;
 
     std::cout << "collected measurements from lidar: " << count << std::endl;
        

@@ -41,7 +41,7 @@ void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoo
     VisualizeMeans();
 
     // compute dispersion of clusters
-    Eigen::MatrixX2d dispersions = Eigen::MatrixX2d::Zero(m_params.numOfCones, 2);
+    Eigen::MatrixX3d dispersions = Eigen::MatrixX3d::Zero(m_params.numOfCones, 3);
     for (size_t i = 0; i < m_params.numOfCones; i++)
     {
         int clusterSize = m_clustersSize(i);
@@ -49,7 +49,7 @@ void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoo
         cluster.col(0) = m_clustersX.block(0,i, clusterSize,1);
         cluster.col(1) =  m_clustersY.block(0,i, clusterSize,1);
         
-        dispersions.block<1,2>(i,0) = 
+        dispersions.block<1,3>(i,0) = 
             ComputeDisp(cluster, Eigen::Vector2d(m_meansX(i), m_meansY(i)));
             VisualizeCluster(cluster.col(0), cluster.col(1), clusterSize);
     }
@@ -149,24 +149,29 @@ double SensorCalibration::UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
 }
 
 // compute x and y dispersion of cluster
-Eigen::RowVector2d SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
+Eigen::RowVector3d SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
                                                 const Eigen::Ref<const Eigen::Vector2d> &mean) const
 {
-    Eigen::RowVector2d disp;
-    Eigen::ArrayXd diff;
+    Eigen::RowVector3d disp;
+    Eigen::ArrayXd diffX, diffY;
+
+    const int N = cluster.size();
         
-    diff = cluster.col(0).array() - mean(0);
-    disp(0) = diff.matrix().transpose() * diff.matrix();
-    disp(0) /= (cluster.size() - 1);
+    diffX = cluster.col(0).array() - mean(0);
+    disp(0) = diffX.matrix().transpose() * diffX.matrix();
+    disp(0) /= static_cast<double>(N - 1);
     
-    diff = cluster.col(1).array() - mean(1);
-    disp(1) = diff.matrix().transpose() * diff.matrix();
-    disp(1) /= (cluster.size() - 1);
+    diffY = cluster.col(1).array() - mean(1);
+    disp(1) = diffY.matrix().transpose() * diffY.matrix();
+    disp(1) /= static_cast<double>(N - 1);
+
+    disp(2) = diffX.matrix().transpose() * diffY.matrix();
+    disp(2) /= static_cast<double>(N - 1);
 
     return disp;
 }
 
-void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX2d> &disp) const
+void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX3d> &disp) const
 {
     double offsetX, offsetY;
     for (size_t i = 0; i < m_params.numOfCones; i++)
@@ -177,7 +182,7 @@ void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const
         // fill matrix row (CSV format)
         csvFile << m_params.realCoords(i,0) << "," << m_params.realCoords(i,1) << "," << m_meansX(i) << ","
                 << m_meansY(i) << "," << offsetX << "," << offsetY << "," 
-                << disp(i,0) << "," << disp(i,1) << ";" << std::endl;
+                << disp(i,0) << "," << disp(i,1) << "," << disp(i,2) << ";" << std::endl;
     }
 }
 

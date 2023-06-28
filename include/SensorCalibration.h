@@ -54,8 +54,8 @@ class SensorCalibration
         double UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
                                     const Eigen::Ref<const Eigen::MatrixXd> &clusters,
                                     const Eigen::Ref<const Eigen::RowVectorXd> &countClusters) const;
-        Eigen::RowVector2d ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, const Eigen::Ref<const Eigen::Vector2d> &mean) const;
-        void UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX2d> &disp) const;
+        Eigen::RowVector3d ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, const Eigen::Ref<const Eigen::Vector2d> &mean) const;
+        void UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX3d> &disp) const;
 
         void VisualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &clusterX, const Eigen::Ref<const Eigen::VectorXd> &clusterY,
                             const int countCluster);

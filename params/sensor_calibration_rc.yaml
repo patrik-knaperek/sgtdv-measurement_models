@@ -16,13 +16,13 @@ cone_coords_y: [
     1.0, 
     2.0, 
     # 3.0, 
-    # 4.0, 
+    # 4.0,
     # 5.01
     ]
 
 number_of_cones: 3
 number_of_sensors: 1
 number_of_measurements: 600
-distance_treshold_x: 1.0
-distance_treshold_y: 0.7
+distance_treshold_x: 2.0
+distance_treshold_y: 1.5
 output_filename: sensor_model
