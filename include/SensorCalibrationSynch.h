@@ -13,8 +13,8 @@
 #include <Eigen/Eigen>
 #include <XmlRpcException.h>
 
-#include <sgtdv_msgs/ConeArr.h>
-#include <sgtdv_msgs/Point2DArr.h>
+#include <sgtdv_msgs/ConeStampedArr.h>
+#include <sgtdv_msgs/Point2DStampedArr.h>
 
 #include "../include/SensorCalibration.h"
 
@@ -45,8 +45,8 @@ class SensorCalibrationSynch
        	};
         void SetRealCoords(const Eigen::Ref<const Eigen::MatrixX2d> &realCoords) { m_realCoords = realCoords; };
 
-        void DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg);
-        void DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg);      
+        void DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg);
+        void DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg);      
 
     private:
         void Init();

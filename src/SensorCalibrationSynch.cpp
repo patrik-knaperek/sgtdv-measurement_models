@@ -37,7 +37,7 @@ void SensorCalibrationSynch::Init()
 }
 
 // get measurement from camera
-void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
+void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
     int msgSize = msg->cones.size();
     if (msgSize == 0) return;
@@ -79,7 +79,7 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeArr::ConstPtr &msg)
 }
 
 // get measurement from lidar
-void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
+void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
     int msgSize = msg->points.size();
     if (msgSize == 0) return;
