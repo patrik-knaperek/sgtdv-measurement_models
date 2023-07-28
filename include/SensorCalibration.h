@@ -5,16 +5,17 @@
 
 #pragma once
 
-#include <ros/ros.h>
-#include <ros/package.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <Eigen/Eigen>
 
-#include "../../SGT_Macros.h"
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <visualization_msgs/MarkerArray.h>
 
-#define N_OF_MODELS 2
+
+#include "../../SGT_Macros.h"
 
 class SensorCalibration
 {
@@ -22,47 +23,55 @@ class SensorCalibration
         SensorCalibration();
         ~SensorCalibration();
 
-        void Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const Eigen::Ref<const Eigen::RowVector2d> &realCoords,
-                std::string sensorName);
+        void Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const std::string &sensorName);
+
+        struct CalibrationParams
+        {
+            int numOfSensors;
+            int numOfCones;
+            int sizeOfSet;
+            int sizeOfClusterMax;
+            Eigen::MatrixXd realCoords;
+            std::string fixedFrame;
+        };
         
         // Setters
-        void SetPublisher(ros::Publisher publisher) { m_logPublisher = publisher; };
-        void SetNumOfSensors(int numOfSensors) { m_numOfSensors = numOfSensors; };
-        void SetNumOfCones(int numOfCones) { m_numOfCones = numOfCones; };
-        void SetModelNumber(int modelNumber) { m_modelNumber = modelNumber; };
-        void InitOutFiles(std::string outFilename);
-        void SetAvgValues(const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesCamera,
-                        const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValuesLidar)
+        void SetParams(const CalibrationParams &params)
         {
-            m_avgValuesCam = avgValuesCamera;
-            m_avgValuesLid = avgValuesLidar;
+            m_params = params;
         };
-       
+        void InitOutFiles(const std::string &outFilename);
+
+        void SetClusterPub(const ros::Publisher &cluster_pub)
+        {
+            m_clusterPub = cluster_pub;
+        };
+
     private:
-        void MeanAndCov(const Eigen::Ref<const Eigen::MatrixX2d> &obs, Eigen::Ref<Eigen::RowVector2d> mean, Eigen::Ref<Eigen::Matrix2d> cov);
-        void UpdateAvgValues(Eigen::Ref<Eigen::Array<double, N_OF_MODELS, 5>> avgValues, 
-                            const Eigen::Ref<const Eigen::RowVector2d> &realCoords, const Eigen::Ref<const Eigen::RowVector2d> &mean,
-                            const Eigen::Ref<const Eigen::Matrix2d> &covariance, int numOfNewMeassurements
-                        #ifdef SGT_EXPORT_DATA_CSV
-                            , std::ofstream &csvFile
-                        #endif
-                        );
-        void WriteToFile(std::ofstream &paramFile, const Eigen::Ref<const Eigen::Array<double, N_OF_MODELS, 5>> &avgValues);
+        void KMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords);
+        void ClusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements);
+        double EuclideanDist(const double x1, const double x2, const double y1, const double y2) const;
+        double UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
+                                    const Eigen::Ref<const Eigen::MatrixXd> &clusters,
+                                    const Eigen::Ref<const Eigen::RowVectorXd> &countClusters) const;
+        Eigen::RowVector3d ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, const Eigen::Ref<const Eigen::Vector2d> &mean) const;
+        void UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX3d> &disp) const;
+
+        void VisualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &clusterX, const Eigen::Ref<const Eigen::VectorXd> &clusterY,
+                            const int countCluster);
+        void VisualizeMeans();
         
         ros::Publisher m_logPublisher;
+        CalibrationParams m_params;
         int m_counter;
-        int m_numOfSensors;
-        int m_numOfCones;
-        int m_modelNumber;
-        std::ofstream m_outParamFileCam;
-        std::ofstream m_outParamFileLid;
 
-        // avgValues := [number_of_measurements, average_offset_x, average_offset_y, covariance_xx, covariance_yy]
-        Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesCam;
-        Eigen::Array<double, N_OF_MODELS, 5> m_avgValuesLid; 
-        
-    #ifdef SGT_EXPORT_DATA_CSV
+        Eigen::RowVectorXd m_meansX, m_meansY;
+        Eigen::MatrixXd m_clustersX, m_clustersY;
+        Eigen::RowVectorXd m_clustersSize;
+
         std::ofstream m_outCsvFileLid;
         std::ofstream m_outCsvFileCam;
-    #endif
+
+        ros::Publisher m_clusterPub;
+        visualization_msgs::MarkerArray m_clustersVis;
 };

@@ -1,13 +1,11 @@
 <?xml version="1.0"?>
 <launch>
     <rosparam command="load" file="$(find calibration)/params/sensor_calibration_rc.yaml"/>
-    <rosparam command="load" file="$(find calibration)/params/sensor_model_camera.yaml"/>
-    <rosparam command="load" file="$(find calibration)/params/sensor_model_lidar.yaml"/>
 
     <node pkg="calibration" type="sensor_calibration" name="sensor_calibration" output="screen"/>
 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="camera_left_to_camera_center" 
-    args="0 0.06 0 0 0 0 camera_center camera_left" />
+	<!--<node pkg="tf2_ros" type="static_transform_publisher" name="camera_left_to_camera_center" 
+    args="0 0.06 0 0 0 0 camera_center camera_left" />-->
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
     args="0 0 0 0 0 0 base_link camera_center" />
