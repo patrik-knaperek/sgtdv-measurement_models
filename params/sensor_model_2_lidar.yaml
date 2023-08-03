@@ -1,4 +1,5 @@
 lidar:
+  number_of_models: 2
   number_of_measurements: [20, 19, ]
   offset: [
     -0.05697055, -0.06376586, 

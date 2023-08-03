@@ -1,4 +1,5 @@
 camera:
+  number_of_models: 2
   number_of_meassurements: [26, 25, ]
   offset: [
     -0.0511253846153846, -0.0978092,
