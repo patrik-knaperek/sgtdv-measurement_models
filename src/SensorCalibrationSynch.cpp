@@ -137,6 +137,7 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr
         if (count == m_params.sizeOfSet)
         {
             m_calibrationObj.Do(measurementSet, "camera");
+            break;
         }
     }
 }
@@ -179,6 +180,7 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstP
         if (count == m_params.sizeOfSet)
         {
             m_calibrationObj.Do(measurementSet, "lidar");
+            break;
         }
     }
 }

@@ -41,15 +41,16 @@ void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoo
     VisualizeMeans();
 
     // compute dispersion of clusters
-    Eigen::MatrixX3d dispersions = Eigen::MatrixX3d::Zero(m_params.numOfCones, 3);
-    for (size_t i = 0; i < m_params.numOfCones; i++)
+    Eigen::Matrix<double, Eigen::Dynamic, 6> dispersions 
+        = Eigen::Matrix<double, Eigen::Dynamic, 6>::Zero(m_params.numOfCones, 6);
+    for (int i = 0; i < m_params.numOfCones; i++)
     {
         int clusterSize = m_clustersSize(i);
         Eigen::MatrixX2d cluster = Eigen::MatrixX2d::Zero(clusterSize,2);
         cluster.col(0) = m_clustersX.block(0,i, clusterSize,1);
         cluster.col(1) =  m_clustersY.block(0,i, clusterSize,1);
         
-        dispersions.block<1,3>(i,0) = 
+        dispersions.block<1,6>(i,0) = 
             ComputeDisp(cluster, Eigen::Vector2d(m_meansX(i), m_meansY(i)));
             VisualizeCluster(cluster.col(0), cluster.col(1), clusterSize);
     }
@@ -99,7 +100,7 @@ void SensorCalibration::KMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d
         }
         ROS_INFO_STREAM("new means\n" << m_meansX << "\n" << m_meansY);
     } while (!finished);
-    ROS_INFO ("K-Means completed");
+    ROS_INFO("K-Means completed");
 }
 
 // asociate points to clusters based on the closest mean
@@ -149,13 +150,14 @@ double SensorCalibration::UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
 }
 
 // compute x and y dispersion of cluster
-Eigen::RowVector3d SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
+Eigen::Matrix<double,1,6> SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
                                                 const Eigen::Ref<const Eigen::Vector2d> &mean) const
 {
-    Eigen::RowVector3d disp;
-    Eigen::ArrayXd diffX, diffY;
+    Eigen::Matrix<double,1,6> disp;
+    Eigen::ArrayXd diffX, diffY, diffR, diffPhi;
 
-    const int N = cluster.size();
+    const int N = cluster.rows();
+
         
     diffX = cluster.col(0).array() - mean(0);
     disp(0) = diffX.matrix().transpose() * diffX.matrix();
@@ -168,10 +170,38 @@ Eigen::RowVector3d SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::
     disp(2) = diffX.matrix().transpose() * diffY.matrix();
     disp(2) /= static_cast<double>(N - 1);
 
+    const auto mean_radius = std::sqrt(std::pow(mean(0),2) + std::pow(mean(1),2));
+    const auto mean_angle = std::atan2(mean(1), mean(0));
+    
+    Eigen::VectorXd cluster_radius(N);
+    Eigen::VectorXd cluster_angle(N);
+    for (int i = 0; i < N; i++)
+    {
+        cluster_radius(i) = std::sqrt(std::pow(cluster(i,0),2) + std::pow(cluster(i,1),2));
+        
+        cluster_angle(i) = std::atan2(cluster(i,1), cluster(i,0));
+        if (std::abs(cluster_angle(i)) > M_PI)
+        {
+            cluster_angle(i) = std::pow(-1,static_cast<int>(cluster_angle(i) > 0) 
+                                * (2 * M_PI - std::abs(cluster_angle(i))));
+        }
+    }
+    
+    diffR = cluster_radius.array() - mean_radius;
+    disp(3) = diffR.matrix().transpose() * diffR.matrix();
+    disp(3) /= static_cast<double>(N - 1);
+    
+    diffPhi = cluster_angle.array() - mean_angle;
+    disp(4) = diffPhi.matrix().transpose() * diffPhi.matrix();
+    disp(4) /= static_cast<double>(N - 1);
+    
+    disp(5) = diffR.matrix().transpose() * diffPhi.matrix();
+    disp(5) /= static_cast<double>(N - 1);
+
     return disp;
 }
 
-void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::MatrixX3d> &disp) const
+void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, 6>> &disp) const
 {
     double offsetX, offsetY;
     for (size_t i = 0; i < m_params.numOfCones; i++)
@@ -179,10 +209,11 @@ void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const
         offsetX = m_params.realCoords(i,0) - m_meansX(i);
         offsetY = m_params.realCoords(i,1) - m_meansY(i);
 
-        // fill matrix row (CSV format)
+        // fill matrix row (CSV format): real_x, real_y, measured_mean_x, measured_mean_y, offset_x, offset_y, cov_xx, cov_yy, cov_xy, cov_rr, cov_tt, cov_rt (t - theta angle)
         csvFile << m_params.realCoords(i,0) << "," << m_params.realCoords(i,1) << "," << m_meansX(i) << ","
                 << m_meansY(i) << "," << offsetX << "," << offsetY << "," 
-                << disp(i,0) << "," << disp(i,1) << "," << disp(i,2) << ";" << std::endl;
+                << disp(i,0) << "," << disp(i,1) << "," << disp(i,2) << ","
+                << disp(i,3) << "," << disp(i,4) << "," << disp(i,5) << ";" << std::endl;
     }
 }
 
