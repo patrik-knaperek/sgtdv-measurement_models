@@ -7,11 +7,12 @@
 #include "data_acquisition.h"
 
 DataAcquisition::DataAcquisition(ros::NodeHandle &nh)
-  : camera_sub_(nh.subscribe("/camera_cones", 1, &DataAcquisition::updateCamera, this))
-  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &DataAcquisition::updateLidar, this))
+  : camera_sub_(nh.subscribe("/camera_cones", 1, &DataAcquisition::cameraCallback, this))
+  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &DataAcquisition::lidarCallback, this))
   , cluster_vis_pub_(nh.advertise<visualization_msgs::MarkerArray>("clusters_visualize", 1, true))
 {   
   loadParams(nh);
+  data_processing_obj_.setClusterPub(cluster_vis_pub_);
 }
 
 void DataAcquisition::loadParams(const ros::NodeHandle &nh)
@@ -51,104 +52,87 @@ void DataAcquisition::loadParams(const ros::NodeHandle &nh)
 }
 
 // get measurement from camera
-void DataAcquisition::updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
+void DataAcquisition::cameraCallback(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
   static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
   static int count = 0;
 
-  int msg_size = msg->cones.size();
-  if (msg_size == 0 || count >= params_.size_of_set) return;
+  if (msg->cones.size() == 0 || count >= params_.size_of_set) return;
 
-  std::cout << "collected measurements from camera: " << count << std::endl;
+  ROS_INFO_STREAM("collected measurements from camera: " << count);
   
-  geometry_msgs::PointStamped coords_msg_frame = geometry_msgs::PointStamped();
-  geometry_msgs::PointStamped coords_fixed_frame = geometry_msgs::PointStamped();
-  for (int i = 0; i < msg_size; i++)
+  std::vector<geometry_msgs::PointStamped> coords_msg_frame;
+  for (const auto& cone : msg->cones)
   {
     // check if data is valid
-    if (std::isnan(msg->cones[i].coords.x) || std::isnan(msg->cones[i].coords.y))
+    if (std::isnan(cone.coords.x) || std::isnan(cone.coords.y))
       continue;
-        
-    // transformation to common frame
-    coords_msg_frame.header = msg->cones[i].coords.header;
-    coords_msg_frame.point.x = msg->cones[i].coords.x;
-    coords_msg_frame.point.y = msg->cones[i].coords.y;
-    coords_msg_frame.point.z = 0;
-
-    if (coords_msg_frame.header.frame_id.compare(params_.fixed_frame) == 0)
-      coords_fixed_frame = coords_msg_frame;
-    else
-      coords_fixed_frame = transformCoords(coords_msg_frame);
-        
-    Eigen::RowVector2d measured_coords(coords_fixed_frame.point.x, coords_fixed_frame.point.y);
-    if (dataVerification(measured_coords))
-    {
-      measurement_set.row(count++) = measured_coords;
-    }
-    if (count == params_.size_of_set)
-    {
-      data_processing_obj_.update(measurement_set, "camera");
-      break;
-    }
+    
+    geometry_msgs::PointStamped point;
+    point.header = cone.coords.header;
+    point.point.x = cone.coords.x;
+    point.point.y = cone.coords.y;
+    coords_msg_frame.emplace_back(point);
   }
+
+  update(measurement_set, coords_msg_frame, count, "camera");
 }
 
 // get measurement from lidar
-void DataAcquisition::updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
+void DataAcquisition::lidarCallback(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
   static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
   static int count = 0;
   
-  int msg_size = msg->points.size();
-  if (msg_size == 0 || count >= params_.size_of_set) return;
+  if (msg->points.size() == 0 || count >= params_.size_of_set) return;
 
   std::cout << "collected measurements from lidar: " << count << std::endl;
-      
-  geometry_msgs::PointStamped coords_msg_frame = geometry_msgs::PointStamped();
-  geometry_msgs::PointStamped coords_fixed_frame = geometry_msgs::PointStamped();
-  for (int i = 0; i < msg_size; i++)
+
+  std::vector<geometry_msgs::PointStamped> coords_msg_frame;
+  for (const auto& cone : msg->points)
   {
     // check if data is valid
-    if (std::isnan(msg->points[i].x) || std::isnan(msg->points[i].y))
+    if (std::isnan(cone.x) || std::isnan(cone.y))
       continue;
+    
+    geometry_msgs::PointStamped point;
+    point.header = cone.header;
+    point.point.x = cone.x;
+    point.point.y = cone.y;
+    coords_msg_frame.emplace_back(point);
+  }
 
+  update(measurement_set, coords_msg_frame, count, "lidar");
+}
+
+// transform coordinates and add to the measurement set or send to data processing object
+void DataAcquisition::update(Eigen::Ref<Eigen::MatrixX2d> measurement_set,
+            const std::vector<geometry_msgs::PointStamped> coords_msg_frame, 
+            int count, const std::string& sensor_name)
+{
+  geometry_msgs::PointStamped coords_fixed_frame;
+  for (const auto& point : coords_msg_frame)
+  {
     // transformation to common frame
-    coords_msg_frame.header = msg->points[i].header;
-    coords_msg_frame.point.x = msg->points[i].x;
-    coords_msg_frame.point.y = msg->points[i].y;
-    coords_msg_frame.point.z = 0;
-
-    if (coords_msg_frame.header.frame_id.compare(params_.fixed_frame) != 0)
-      coords_fixed_frame = transformCoords(coords_msg_frame);
+    if (point.header.frame_id.compare(params_.fixed_frame) != 0)
+      coords_fixed_frame = Utils::transformCoords(listener_, params_.fixed_frame, point);
     else
-      coords_fixed_frame = coords_msg_frame;
-
+      coords_fixed_frame = point;    
     Eigen::RowVector2d measured_coords(coords_fixed_frame.point.x, coords_fixed_frame.point.y);
+
+    // add new measurement to the set
     if (dataVerification(measured_coords))
     {
       measurement_set.row(count++) = measured_coords;
     }
+
+    // send completed set to the data processing object
     if (count == params_.size_of_set)
     {
-      data_processing_obj_.update(measurement_set, "lidar");
+      data_processing_obj_.update(measurement_set, sensor_name);
       break;
     }
   }
-}
-
-geometry_msgs::PointStamped 
-DataAcquisition::transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const
-{
-  geometry_msgs::PointStamped coords_parent_frame = geometry_msgs::PointStamped();
-  try
-  {
-    listener_.transformPoint(params_.fixed_frame, coords_child_frame, coords_parent_frame);
-  }
-  catch (tf::TransformException &e)
-  {
-    std::cout << e.what();
-  }
-  return coords_parent_frame;
 }
 
 bool DataAcquisition::dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const

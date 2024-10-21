@@ -6,11 +6,6 @@
 /* Header */
 #include "data_processing.h"
 
-DataProcessing::DataProcessing()
-{
-  counter_ = 0;
-}
-
 void DataProcessing::initOutFiles(const std::string &out_filename)
 {
   std::string path_to_package = ros::package::getPath("measurement_models");
@@ -50,7 +45,7 @@ void DataProcessing::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_c
       visualizeCluster(cluster.col(0), cluster.col(1), cluster_size);
   }
 
-  cluster_pub_.publish(clusters_vis_);
+  cluster_vis_pub_.publish(clusters_msg_);
 
   // export CSV data
   if (sensor_name.compare(std::string("camera")) == 0)
@@ -249,7 +244,7 @@ void DataProcessing::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &c
     cluster.points.push_back(point);
     cluster.colors.push_back(color);
   }
-  clusters_vis_.markers.push_back(cluster);
+  clusters_msg_.markers.push_back(cluster);
 }
 
 void DataProcessing::visualizeMeans()
@@ -284,5 +279,5 @@ void DataProcessing::visualizeMeans()
     cluster.points.push_back(point);
     cluster.colors.push_back(color);
   }
-  clusters_vis_.markers.push_back(cluster);
+  clusters_msg_.markers.push_back(cluster);
 }

@@ -42,21 +42,19 @@ public:
   };
 
 public:
-  DataProcessing();
+  DataProcessing() = default;
   ~DataProcessing() = default;
 
   void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
   
-  // Setters
   void setParams(const Params &params)
   {
     params_ = params;
   };
   void initOutFiles(const std::string &out_filename);
-
-  void setClusterPub(const ros::Publisher &cluster_pub)
+  void setClusterPub(const ros::Publisher &cluster_vis_pub)
   {
-    cluster_pub_ = cluster_pub;
+    cluster_vis_pub_ = cluster_vis_pub;
   };
 
 private:
@@ -78,7 +76,7 @@ private:
   
   ros::Publisher log_publisher_;
   Params params_;
-  int counter_;
+  int counter_ = 0;
 
   Eigen::RowVectorXd means_x_, means_y_;
   Eigen::MatrixXd clusters_x_, clusters_y_;
@@ -87,6 +85,6 @@ private:
   std::ofstream out_csv_file_lid_;
   std::ofstream out_csv_file_cam_;
 
-  ros::Publisher cluster_pub_;
-  visualization_msgs::MarkerArray clusters_vis_;
+  ros::Publisher cluster_vis_pub_;
+  visualization_msgs::MarkerArray clusters_msg_;
 };

@@ -24,6 +24,18 @@ public:
   explicit DataAcquisition(ros::NodeHandle &nh);
   ~DataAcquisition() = default;
 
+private:
+  void loadParams(const ros::NodeHandle &nh);  
+  
+  void cameraCallback(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg);
+  void lidarCallback(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg);
+
+  void update(Eigen::Ref<Eigen::MatrixX2d> measurement_set,
+              const std::vector<geometry_msgs::PointStamped> coords_msg_frame, 
+              int count, const std::string& sensor_name);
+
+  bool dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
+
   struct Params
   {
     std::string fixed_frame;
@@ -34,20 +46,11 @@ public:
     float dist_th_y;
     Eigen::MatrixXd real_coords;
   };
-
-  void updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg);
-  void updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg);
-
-private:
-  void loadParams(const ros::NodeHandle &nh);  
-  geometry_msgs::PointStamped transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const;
-  bool dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
   
   DataProcessing data_processing_obj_;
   Params params_;
 
   ros::Subscriber camera_sub_, lidar_sub_;
   ros::Publisher cluster_vis_pub_;
-  
   tf::TransformListener listener_;
 };
