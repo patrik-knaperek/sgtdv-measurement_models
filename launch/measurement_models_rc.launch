@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam command="load" file="$(find measurement_models)/params/measurement_models_rc.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/measurement_models_rc.yaml"/>
 
-    <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
+  <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
 
-	<!--<node pkg="tf2_ros" type="static_transform_publisher" name="camera_left_to_camera_center" 
-    args="0 0.06 0 0 0 0 camera_center camera_left" />-->
+  <!--<node pkg="tf2_ros" type="static_transform_publisher" name="camera_left_to_camera_center" 
+  args="0 0.06 0 0 0 0 camera_center camera_left" />-->
 
-    <node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
-    args="0 0 0 0 0 0 base_link camera_center" />
-    
-    <node pkg="tf2_ros" type="static_transform_publisher" name="lidar_to_base_link" 
-    args="0.319 0 0 0 0 0 base_link lidar" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
+  args="0 0 0 0 0 0 base_link camera_center" />
+  
+  <node pkg="tf2_ros" type="static_transform_publisher" name="lidar_to_base_link" 
+  args="0.319 0 0 0 0 0 base_link lidar" />
 </launch>

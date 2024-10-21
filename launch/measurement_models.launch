@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam command="load" file="$(find measurement_models)/params/measurement_models_rc.yaml"/>
-    <rosparam command="load" file="$(find measurement_models)/params/sensor_model_2_camera.yaml"/>
-    <rosparam command="load" file="$(find measurement_models)/params/sensor_model_2_lidar.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/measurement_models_rc.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/sensor_model_2_camera.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/sensor_model_2_lidar.yaml"/>
 
-    <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
+  <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
 </launch>

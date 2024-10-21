@@ -12,13 +12,13 @@ fixed_frame: camera_center
 
 cone_coords_x: 3.0
 cone_coords_y: [
-    0.0, 
-    1.0, 
-    2.0, 
-    3.0, 
-    # 4.0,
-    # 5.01
-    ]
+  0.0, 
+  1.0, 
+  2.0, 
+  3.0, 
+  # 4.0,
+  # 5.01
+  ]
 
 number_of_cones: 4
 number_of_sensors: 1

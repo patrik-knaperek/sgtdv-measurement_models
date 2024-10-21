@@ -155,8 +155,8 @@ add_executable(${PROJECT_NAME} src/measurement_models.cpp src/measurement_models
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-   ${catkin_LIBRARIES}
-   ${Eigen3_INCLUDE_DIRS}
+  ${catkin_LIBRARIES}
+  ${Eigen3_INCLUDE_DIRS}
 )
 
 #############

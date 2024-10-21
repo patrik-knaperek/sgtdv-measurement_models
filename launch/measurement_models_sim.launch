@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam command="load" file="$(find measurement_models)/params/measurement_models_sim.yaml"/>
-    <rosparam command="load" file="$(find measurement_models)/params/sensor_model_sim_1_camera.yaml"/>
-    <rosparam command="load" file="$(find measurement_models)/params/sensor_model_sim_1_lidar.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/measurement_models_sim.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/sensor_model_sim_1_camera.yaml"/>
+  <rosparam command="load" file="$(find measurement_models)/params/sensor_model_sim_1_lidar.yaml"/>
 
-    <node pkg="cone_detection_si" type="cone_detection_si" name="cone_detection_si" output="screen"/>
-    <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
+  <node pkg="cone_detection_si" type="cone_detection_si" name="cone_detection_si" output="screen"/>
+  <node pkg="measurement_models" type="measurement_models" name="measurement_models" output="screen"/>
 </launch>
