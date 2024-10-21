@@ -17,7 +17,7 @@
 /* SGT-DV */
 #include "SGT_Macros.h"
 
-class MeasurementModels
+class DataProcessing
 {
 public:
   struct Params
@@ -42,8 +42,8 @@ public:
   };
 
 public:
-  MeasurementModels();
-  ~MeasurementModels() = default;
+  DataProcessing();
+  ~DataProcessing() = default;
 
   void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
   

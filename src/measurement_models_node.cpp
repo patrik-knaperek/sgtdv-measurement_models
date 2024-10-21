@@ -3,14 +3,14 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
-#include "measurement_models_synch.h"
+#include "data_acquisition.h"
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "measurement_models");
   ros::NodeHandle handle;
 
-  MeasurementModelsSynch synch_obj(handle);
+  DataAcquisition obj(handle);
   
   ros::spin();
 

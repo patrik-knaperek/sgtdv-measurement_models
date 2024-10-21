@@ -4,14 +4,14 @@
 /*****************************************************/
 
 /* Header */
-#include "measurement_models.h"
+#include "data_processing.h"
 
-MeasurementModels::MeasurementModels()
+DataProcessing::DataProcessing()
 {
   counter_ = 0;
 }
 
-void MeasurementModels::initOutFiles(const std::string &out_filename)
+void DataProcessing::initOutFiles(const std::string &out_filename)
 {
   std::string path_to_package = ros::package::getPath("measurement_models");
   
@@ -29,7 +29,7 @@ void MeasurementModels::initOutFiles(const std::string &out_filename)
 
 // compute and export mean, dispersions of measurement and distance between mean of measurement 
 // and real coordinates for each cone using K-Means clustering
-void MeasurementModels::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, 
+void DataProcessing::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, 
                               const std::string &sensor_name)
 {
   kMeansClustering(measured_coords);
@@ -62,7 +62,7 @@ void MeasurementModels::update(const Eigen::Ref<const Eigen::MatrixX2d> &measure
     updateCsv(out_csv_file_lid_, dispersions);
   }
 
-  // calibration completed
+  // data acquisition completed
   if (++counter_ >= params_.num_of_sensors)
   {
     out_csv_file_cam_.close();
@@ -71,7 +71,7 @@ void MeasurementModels::update(const Eigen::Ref<const Eigen::MatrixX2d> &measure
   } 
 }
 
-void MeasurementModels::kMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords)
+void DataProcessing::kMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords)
 {
   // initialization of means
   means_x_ = params_.real_coords.col(0);
@@ -99,7 +99,7 @@ void MeasurementModels::kMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d
 }
 
 // asociate points to clusters based on the closest mean
-void MeasurementModels::clusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements)
+void DataProcessing::clusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements)
 {
   double closest;
   size_t closest_idx;
@@ -124,13 +124,13 @@ void MeasurementModels::clusterAssociation(const Eigen::Ref<const Eigen::MatrixX
 }
 
 // euclidean distance of 2D vectors
-double MeasurementModels::euclideanDist(const double x1, const double x2, const double y1, const double y2) const
+double DataProcessing::euclideanDist(const double x1, const double x2, const double y1, const double y2) const
 {
   return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2)); 
 }
 
 // recomputes new means of clusters, returns rate of shift of the means
-double MeasurementModels::updateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
+double DataProcessing::updateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
                                       const Eigen::Ref<const Eigen::MatrixXd> &clusters,
                                       const Eigen::Ref<const Eigen::RowVectorXd> &count_clusters) const
 {
@@ -145,7 +145,7 @@ double MeasurementModels::updateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
 }
 
 // compute x and y dispersion of cluster
-Eigen::Matrix<double,1,6> MeasurementModels::computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
+Eigen::Matrix<double,1,6> DataProcessing::computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
                                                         const Eigen::Ref<const Eigen::Vector2d> &mean) const
 {
   Eigen::Matrix<double,1,6> disp;
@@ -196,7 +196,7 @@ Eigen::Matrix<double,1,6> MeasurementModels::computeDisp(const Eigen::Ref<const 
   return disp;
 }
 
-void MeasurementModels::updateCsv(std::ofstream &csv_file, const Eigen::Ref<const Eigen::Matrix<double, 
+void DataProcessing::updateCsv(std::ofstream &csv_file, const Eigen::Ref<const Eigen::Matrix<double, 
                                   Eigen::Dynamic, 6>> &disp) const
 {
   double offset_x, offset_y;
@@ -214,7 +214,7 @@ void MeasurementModels::updateCsv(std::ofstream &csv_file, const Eigen::Ref<cons
   }
 }
 
-void MeasurementModels::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &cluster_x, 
+void DataProcessing::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &cluster_x, 
                                         const Eigen::Ref<const Eigen::VectorXd> &cluster_y, const int cluster_size)
 {
   if (cluster_size == 0) return;
@@ -252,7 +252,7 @@ void MeasurementModels::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd>
   clusters_vis_.markers.push_back(cluster);
 }
 
-void MeasurementModels::visualizeMeans()
+void DataProcessing::visualizeMeans()
 {
   visualization_msgs::Marker cluster;
   cluster.ns = "MEANS";

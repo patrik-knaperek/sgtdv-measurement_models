@@ -23,7 +23,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/../
 )
 
-add_executable(${PROJECT_NAME} src/measurement_models.cpp src/measurement_models_node.cpp src/measurement_models_synch.cpp)
+add_executable(${PROJECT_NAME} src/data_acquisition.cpp src/data_processing.cpp src/measurement_models_node.cpp)
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

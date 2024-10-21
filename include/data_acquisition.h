@@ -16,13 +16,13 @@
 /* SGT-DV */
 #include <sgtdv_msgs/ConeStampedArr.h>
 #include <sgtdv_msgs/Point2DStampedArr.h>
-#include "measurement_models.h"
+#include "data_processing.h"
 
-class MeasurementModelsSynch
+class DataAcquisition
 {
 public:
-  explicit MeasurementModelsSynch(ros::NodeHandle &nh);
-  ~MeasurementModelsSynch() = default;
+  explicit DataAcquisition(ros::NodeHandle &nh);
+  ~DataAcquisition() = default;
 
   struct Params
   {
@@ -43,7 +43,7 @@ private:
   geometry_msgs::PointStamped transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const;
   bool dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
   
-  MeasurementModels obj_;
+  DataProcessing data_processing_obj_;
   Params params_;
 
   ros::Subscriber camera_sub_, lidar_sub_;

@@ -4,17 +4,17 @@
 /*****************************************************/
 
 #include "SGT_Utils.h"
-#include "measurement_models_synch.h"
+#include "data_acquisition.h"
 
-MeasurementModelsSynch::MeasurementModelsSynch(ros::NodeHandle &nh)
-  : camera_sub_(nh.subscribe("/camera_cones", 1, &MeasurementModelsSynch::updateCamera, this))
-  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &MeasurementModelsSynch::updateLidar, this))
+DataAcquisition::DataAcquisition(ros::NodeHandle &nh)
+  : camera_sub_(nh.subscribe("/camera_cones", 1, &DataAcquisition::updateCamera, this))
+  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &DataAcquisition::updateLidar, this))
   , cluster_vis_pub_(nh.advertise<visualization_msgs::MarkerArray>("clusters_visualize", 1, true))
 {   
   loadParams(nh);
 }
 
-void MeasurementModelsSynch::loadParams(const ros::NodeHandle &nh)
+void DataAcquisition::loadParams(const ros::NodeHandle &nh)
 {
   Utils::loadParam(nh, "/fixed_frame", &params_.fixed_frame);
   int num_of_measurements, num_of_cones;
@@ -41,17 +41,17 @@ void MeasurementModelsSynch::loadParams(const ros::NodeHandle &nh)
   
   int num_of_sensors;
   Utils::loadParam(nh, "/number_of_sensors", &num_of_sensors);
-  obj_.setParams(MeasurementModels::Params(num_of_sensors, num_of_cones, params_.size_of_set, 
+  data_processing_obj_.setParams(DataProcessing::Params(num_of_sensors, num_of_cones, params_.size_of_set, 
                                           num_of_measurements * 3, params_.real_coords, params_.fixed_frame)
     );
 
   std::string out_filename;
   Utils::loadParam(nh, "/output_filename", &out_filename);
-  obj_.initOutFiles(out_filename);
+  data_processing_obj_.initOutFiles(out_filename);
 }
 
 // get measurement from camera
-void MeasurementModelsSynch::updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
+void DataAcquisition::updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
   static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
   static int count = 0;
@@ -87,14 +87,14 @@ void MeasurementModelsSynch::updateCamera(const sgtdv_msgs::ConeStampedArr::Cons
     }
     if (count == params_.size_of_set)
     {
-      obj_.update(measurement_set, "camera");
+      data_processing_obj_.update(measurement_set, "camera");
       break;
     }
   }
 }
 
 // get measurement from lidar
-void MeasurementModelsSynch::updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
+void DataAcquisition::updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
   static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
   static int count = 0;
@@ -130,14 +130,14 @@ void MeasurementModelsSynch::updateLidar(const sgtdv_msgs::Point2DStampedArr::Co
     }
     if (count == params_.size_of_set)
     {
-      obj_.update(measurement_set, "lidar");
+      data_processing_obj_.update(measurement_set, "lidar");
       break;
     }
   }
 }
 
 geometry_msgs::PointStamped 
-MeasurementModelsSynch::transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const
+DataAcquisition::transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const
 {
   geometry_msgs::PointStamped coords_parent_frame = geometry_msgs::PointStamped();
   try
@@ -151,7 +151,7 @@ MeasurementModelsSynch::transformCoords(const geometry_msgs::PointStamped &coord
   return coords_parent_frame;
 }
 
-bool MeasurementModelsSynch::dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const
+bool DataAcquisition::dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const
 {
   for (int i = 0; i < params_.num_of_cones; i++)
   {
