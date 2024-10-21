@@ -7,67 +7,67 @@
 
 MeasurementModelsSynch::MeasurementModelsSynch(const ros::NodeHandle &nh)
 {   
-    LoadParams(nh);
+    loadParams(nh);
 }
 
-void MeasurementModelsSynch::LoadParams(const ros::NodeHandle &nh)
+void MeasurementModelsSynch::loadParams(const ros::NodeHandle &nh)
 {
-    loadParam(nh, "/fixed_frame", &m_params.fixedFrame);
-    int numOfMeasurements, numOfCones;
-    loadParam(nh, "/number_of_measurements", &numOfMeasurements);
-    loadParam(nh, "/number_of_cones", &numOfCones);
-    m_params.sizeOfSet = numOfMeasurements * numOfCones;
-    m_params.numOfCones = numOfCones;
+    loadParam(nh, "/fixed_frame", &params_.fixed_frame);
+    int num_of_measurements, num_of_cones;
+    loadParam(nh, "/number_of_measurements", &num_of_measurements);
+    loadParam(nh, "/number_of_cones", &num_of_cones);
+    params_.size_of_set = num_of_measurements * num_of_cones;
+    params_.num_of_cones = num_of_cones;
     
-    loadParam(nh, "/distance_treshold_x", &m_params.distTHx);
-    loadParam(nh, "/distance_treshold_y", &m_params.distTHy);
+    loadParam(nh, "/distance_treshold_x", &params_.dist_th_x);
+    loadParam(nh, "/distance_treshold_y", &params_.dist_th_y);
 
-    m_params.realCoords = Eigen::MatrixX2d::Zero(numOfCones, 2);
+    params_.real_coords = Eigen::MatrixX2d::Zero(num_of_cones, 2);
     float x;
     if (loadParam(nh, "/cone_coords_x", &x))
     {
-     	m_params.realCoords.col(0).setConstant(x);
-         m_params.realCoords.col(1) = readArray(nh, "/cone_coords_y", numOfCones,1);
+     	params_.real_coords.col(0).setConstant(x);
+         params_.real_coords.col(1) = readArray(nh, "/cone_coords_y", num_of_cones,1);
         // float y_max, y_min;
         // loadParam(nh, "/cone_coords_y_max", &y_max);
         // loadParam(nh, "/cone_coords_y_min", &y_min);
         // for (int i = 0; i < y_max - y_min + 1; i++)
         // {
-        //     m_params.realCoords(i,0) = x;
-        //     m_params.realCoords(i,1) = y_min + i;
+        //     params_.real_coords(i,0) = x;
+        //     params_.real_coords(i,1) = y_min + i;
         // }
     }
     else
     {
-        m_params.realCoords = readArray(nh, "/cone_coords", numOfCones, 2);
+        params_.real_coords = readArray(nh, "/cone_coords", num_of_cones, 2);
     }
-	std::cout << "real_coords:\n" << m_params.realCoords << std::endl;
+	std::cout << "real_coords:\n" << params_.real_coords << std::endl;
     
-    MeasurementModels::Params calibrationParams;
-    calibrationParams.realCoords = m_params.realCoords;
+    MeasurementModels::Params calibration_params;
+    calibration_params.real_coords = params_.real_coords;
 
-    calibrationParams.numOfCones = numOfCones;
-    calibrationParams.sizeOfSet = m_params.sizeOfSet;
-    calibrationParams.sizeOfClusterMax = numOfMeasurements * 3;
-    calibrationParams.fixedFrame = m_params.fixedFrame;
-    loadParam(nh, "/number_of_sensors", &calibrationParams.numOfSensors);
-    m_calibrationObj.SetParams(calibrationParams);
+    calibration_params.num_of_cones = num_of_cones;
+    calibration_params.size_of_set = params_.size_of_set;
+    calibration_params.size_of_cluster_max = num_of_measurements * 3;
+    calibration_params.fixed_frame = params_.fixed_frame;
+    loadParam(nh, "/number_of_sensors", &calibration_params.num_of_sensors);
+    obj_.setParams(calibration_params);
 
-    std::string outFilename;
-    loadParam(nh, "/output_filename", &outFilename);
-    m_calibrationObj.InitOutFiles(outFilename);
+    std::string out_filename;
+    loadParam(nh, "/output_filename", &out_filename);
+    obj_.initOutFiles(out_filename);
 }
 
 // read multidimensional array from parameter server
-Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle, const std::string &paramName, const int rows, const int cols) const
+Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle, const std::string &param_name, const int rows, const int cols) const
 {
-    XmlRpc::XmlRpcValue paramValue;
-    Eigen::ArrayXXd arrayValue = Eigen::ArrayXXd::Zero(rows, cols);
-    if (loadParam(handle, paramName, &paramValue))
+    XmlRpc::XmlRpcValue param_value;
+    Eigen::ArrayXXd array_value = Eigen::ArrayXXd::Zero(rows, cols);
+    if (loadParam(handle, param_name, &param_value))
     {
         try
         {
-            ROS_ASSERT(paramValue.getType() == XmlRpc::XmlRpcValue::TypeArray);
+            ROS_ASSERT(param_value.getType() == XmlRpc::XmlRpcValue::TypeArray);
             for (int i = 0; i < rows; i++)
             {
                 for (int j = 0; j < cols; j++)
@@ -75,9 +75,9 @@ Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle,
                     try
                     {
                         std::ostringstream ostr;
-                        ostr << paramValue[cols * i  + j];
+                        ostr << param_value[cols * i  + j];
                         std::istringstream istr(ostr.str());
-                        istr >> arrayValue(i, j);
+                        istr >> array_value(i, j);
                     }
                     catch(XmlRpc::XmlRpcException &e)
                     {
@@ -93,118 +93,118 @@ Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle,
         catch(XmlRpc::XmlRpcException &e)
         {
             ROS_ERROR_STREAM("ERROR reading from server: " << e.getMessage() <<
-                            " for " << paramName << "(type: " << paramValue.getType() << ")");
+                            " for " << param_name << "(type: " << param_value.getType() << ")");
         }
     }
-    return arrayValue;
+    return array_value;
 }
 
 // get measurement from camera
-void MeasurementModelsSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
+void MeasurementModelsSynch::updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
-    static Eigen::MatrixX2d measurementSet(m_params.sizeOfSet, 2);
+    static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
     static int count = 0;
 
-    int msgSize = msg->cones.size();
-    if (msgSize == 0 || count >= m_params.sizeOfSet) return;
+    int msg_size = msg->cones.size();
+    if (msg_size == 0 || count >= params_.size_of_set) return;
 
     std::cout << "collected measurements from camera: " << count << std::endl;
     
-    geometry_msgs::PointStamped coordsMsgFrame = geometry_msgs::PointStamped();
-    geometry_msgs::PointStamped coordsFixedFrame = geometry_msgs::PointStamped();
-    for (int i = 0; i < msgSize; i++)
+    geometry_msgs::PointStamped coords_msg_frame = geometry_msgs::PointStamped();
+    geometry_msgs::PointStamped coords_fixed_frame = geometry_msgs::PointStamped();
+    for (int i = 0; i < msg_size; i++)
     {
         // check if data is valid
         if (std::isnan(msg->cones[i].coords.x) || std::isnan(msg->cones[i].coords.y))
             continue;
             
         // transformation to common frame
-        coordsMsgFrame.header = msg->cones[i].coords.header;
-        coordsMsgFrame.point.x = msg->cones[i].coords.x;
-        coordsMsgFrame.point.y = msg->cones[i].coords.y;
-        coordsMsgFrame.point.z = 0;
+        coords_msg_frame.header = msg->cones[i].coords.header;
+        coords_msg_frame.point.x = msg->cones[i].coords.x;
+        coords_msg_frame.point.y = msg->cones[i].coords.y;
+        coords_msg_frame.point.z = 0;
 
-        if (coordsMsgFrame.header.frame_id.compare(m_params.fixedFrame) == 0)
-            coordsFixedFrame = coordsMsgFrame;
+        if (coords_msg_frame.header.frame_id.compare(params_.fixed_frame) == 0)
+            coords_fixed_frame = coords_msg_frame;
         else
-            coordsFixedFrame = TransformCoords(coordsMsgFrame);
+            coords_fixed_frame = transformCoords(coords_msg_frame);
             
-        Eigen::RowVector2d measuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-        if (DataVerification(measuredCoords))
+        Eigen::RowVector2d measured_coords(coords_fixed_frame.point.x, coords_fixed_frame.point.y);
+        if (dataVerification(measured_coords))
         {
-            measurementSet.row(count++) = measuredCoords;
+            measurement_set.row(count++) = measured_coords;
         }
-        if (count == m_params.sizeOfSet)
+        if (count == params_.size_of_set)
         {
-            m_calibrationObj.Do(measurementSet, "camera");
+            obj_.update(measurement_set, "camera");
             break;
         }
     }
 }
 
 // get measurement from lidar
-void MeasurementModelsSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
+void MeasurementModelsSynch::updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
-    static Eigen::MatrixX2d measurementSet(m_params.sizeOfSet, 2);
+    static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
     static int count = 0;
     
-    int msgSize = msg->points.size();
-    if (msgSize == 0 || count >= m_params.sizeOfSet) return;
+    int msg_size = msg->points.size();
+    if (msg_size == 0 || count >= params_.size_of_set) return;
 
     std::cout << "collected measurements from lidar: " << count << std::endl;
        
-    geometry_msgs::PointStamped coordsMsgFrame = geometry_msgs::PointStamped();
-    geometry_msgs::PointStamped coordsFixedFrame = geometry_msgs::PointStamped();
-    for (int i = 0; i < msgSize; i++)
+    geometry_msgs::PointStamped coords_msg_frame = geometry_msgs::PointStamped();
+    geometry_msgs::PointStamped coords_fixed_frame = geometry_msgs::PointStamped();
+    for (int i = 0; i < msg_size; i++)
     {
         // check if data is valid
         if (std::isnan(msg->points[i].x) || std::isnan(msg->points[i].y))
             continue;
 
         // transformation to common frame
-        coordsMsgFrame.header = msg->points[i].header;
-        coordsMsgFrame.point.x = msg->points[i].x;
-        coordsMsgFrame.point.y = msg->points[i].y;
-        coordsMsgFrame.point.z = 0;
+        coords_msg_frame.header = msg->points[i].header;
+        coords_msg_frame.point.x = msg->points[i].x;
+        coords_msg_frame.point.y = msg->points[i].y;
+        coords_msg_frame.point.z = 0;
 
-        if (coordsMsgFrame.header.frame_id.compare(m_params.fixedFrame) != 0)
-            coordsFixedFrame = TransformCoords(coordsMsgFrame);
+        if (coords_msg_frame.header.frame_id.compare(params_.fixed_frame) != 0)
+            coords_fixed_frame = transformCoords(coords_msg_frame);
         else
-            coordsFixedFrame = coordsMsgFrame;
+            coords_fixed_frame = coords_msg_frame;
 
-        Eigen::RowVector2d measuredCoords(coordsFixedFrame.point.x, coordsFixedFrame.point.y);
-        if (DataVerification(measuredCoords))
+        Eigen::RowVector2d measured_coords(coords_fixed_frame.point.x, coords_fixed_frame.point.y);
+        if (dataVerification(measured_coords))
         {
-            measurementSet.row(count++) = measuredCoords;
+            measurement_set.row(count++) = measured_coords;
         }
-        if (count == m_params.sizeOfSet)
+        if (count == params_.size_of_set)
         {
-            m_calibrationObj.Do(measurementSet, "lidar");
+            obj_.update(measurement_set, "lidar");
             break;
         }
     }
 }
 
-geometry_msgs::PointStamped MeasurementModelsSynch::TransformCoords(const geometry_msgs::PointStamped &coordsChildFrame) const
+geometry_msgs::PointStamped MeasurementModelsSynch::transformCoords(const geometry_msgs::PointStamped &coords_child_frame) const
 {
-    geometry_msgs::PointStamped coordsParentFrame = geometry_msgs::PointStamped();
+    geometry_msgs::PointStamped coords_parent_frame = geometry_msgs::PointStamped();
     try
     {
-        m_listener.transformPoint(m_params.fixedFrame, coordsChildFrame, coordsParentFrame);
+        listener_.transformPoint(params_.fixed_frame, coords_child_frame, coords_parent_frame);
     }
     catch (tf::TransformException &e)
     {
         std::cout << e.what();
     }
-    return coordsParentFrame;
+    return coords_parent_frame;
 }
 
-bool MeasurementModelsSynch::DataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords) const 
+bool MeasurementModelsSynch::dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const 
 {
-    for (int i = 0; i < m_params.numOfCones; i++)
+    for (int i = 0; i < params_.num_of_cones; i++)
     {
-        if (abs(m_params.realCoords(i,0) - measuredCoords(0)) < m_params.distTHx &&
-            abs(m_params.realCoords(i,1) - measuredCoords(1)) < m_params.distTHy)
+        if (abs(params_.real_coords(i,0) - measured_coords(0)) < params_.dist_th_x &&
+            abs(params_.real_coords(i,1) - measured_coords(1)) < params_.dist_th_y)
         {   
             return true;
         }

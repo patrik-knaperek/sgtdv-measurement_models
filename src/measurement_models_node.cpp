@@ -12,11 +12,11 @@ int main(int argc, char** argv)
 
     ros::Publisher cluster_pub = handle.advertise<visualization_msgs::MarkerArray>("clusters_visualize", 1, true);
 
-    MeasurementModelsSynch synchObj(handle);
-    synchObj.SetClusterPub(cluster_pub);
+    MeasurementModelsSynch synch_obj(handle);
+    synch_obj.setClusterPub(cluster_pub);
     
-    ros::Subscriber cameraSub = handle.subscribe("/camera_cones", 1, &MeasurementModelsSynch::DoCamera, &synchObj);
-    ros::Subscriber lidarSub = handle.subscribe("/lidar_cones", 1, &MeasurementModelsSynch::DoLidar, &synchObj);
+    ros::Subscriber camera_sub = handle.subscribe("/camera_cones", 1, &MeasurementModelsSynch::updateCamera, &synch_obj);
+    ros::Subscriber lidar_sub = handle.subscribe("/lidar_cones", 1, &MeasurementModelsSynch::updateLidar, &synch_obj);
 
     ros::spin();
 
