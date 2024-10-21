@@ -14,10 +14,6 @@ MeasurementModels::MeasurementModels()
   counter_ = 0;
 }
 
-MeasurementModels::~MeasurementModels()
-{
-}
-
 void MeasurementModels::initOutFiles(const std::string &out_filename)
 {
   std::string path_to_package = ros::package::getPath("measurement_models");

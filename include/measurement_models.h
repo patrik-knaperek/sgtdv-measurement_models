@@ -21,7 +21,7 @@ class MeasurementModels
 {
 public:
   MeasurementModels();
-  ~MeasurementModels();
+  ~MeasurementModels() = default;
 
   void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
 

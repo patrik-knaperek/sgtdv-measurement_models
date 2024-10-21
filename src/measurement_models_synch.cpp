@@ -5,7 +5,10 @@
 
 #include "measurement_models_synch.h"
 
-MeasurementModelsSynch::MeasurementModelsSynch(const ros::NodeHandle &nh)
+MeasurementModelsSynch::MeasurementModelsSynch(ros::NodeHandle &nh)
+  : camera_sub_(nh.subscribe("/camera_cones", 1, &MeasurementModelsSynch::updateCamera, this))
+  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &MeasurementModelsSynch::updateLidar, this))
+  , cluster_vis_pub_(nh.advertise<visualization_msgs::MarkerArray>("clusters_visualize", 1, true))
 {   
   loadParams(nh);
 }

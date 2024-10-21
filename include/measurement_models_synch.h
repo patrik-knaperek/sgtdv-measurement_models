@@ -22,7 +22,7 @@
 class MeasurementModelsSynch
 {
 public:
-  MeasurementModelsSynch(const ros::NodeHandle &nh);
+  explicit MeasurementModelsSynch(ros::NodeHandle &nh);
   ~MeasurementModelsSynch() = default;
 
   struct Params
@@ -38,11 +38,6 @@ public:
 
   void updateCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg);
   void updateLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg);
-
-  void setClusterPub(const ros::Publisher &cluster_pub)
-  {
-    obj_.setClusterPub(cluster_pub);
-  };
 
 private:
   void loadParams(const ros::NodeHandle &nh);
@@ -73,6 +68,9 @@ private:
   
   MeasurementModels obj_;
   Params params_;
+
+  ros::Subscriber camera_sub_, lidar_sub_;
+  ros::Publisher cluster_vis_pub_;
   
   tf::TransformListener listener_;
 };
