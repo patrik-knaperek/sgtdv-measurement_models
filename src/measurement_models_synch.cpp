@@ -3,14 +3,14 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
-#include "../include/SensorCalibrationSynch.h"
+#include "../include/measurement_models_synch.h"
 
-SensorCalibrationSynch::SensorCalibrationSynch(const ros::NodeHandle &nh)
+MeasurementModelsSynch::MeasurementModelsSynch(const ros::NodeHandle &nh)
 {   
     LoadParams(nh);
 }
 
-void SensorCalibrationSynch::LoadParams(const ros::NodeHandle &nh)
+void MeasurementModelsSynch::LoadParams(const ros::NodeHandle &nh)
 {
     loadParam(nh, "/fixed_frame", &m_params.fixedFrame);
     int numOfMeasurements, numOfCones;
@@ -43,7 +43,7 @@ void SensorCalibrationSynch::LoadParams(const ros::NodeHandle &nh)
     }
 	std::cout << "real_coords:\n" << m_params.realCoords << std::endl;
     
-    SensorCalibration::CalibrationParams calibrationParams;
+    MeasurementModels::Params calibrationParams;
     calibrationParams.realCoords = m_params.realCoords;
 
     calibrationParams.numOfCones = numOfCones;
@@ -59,7 +59,7 @@ void SensorCalibrationSynch::LoadParams(const ros::NodeHandle &nh)
 }
 
 // read multidimensional array from parameter server
-Eigen::ArrayXXd SensorCalibrationSynch::readArray(const ros::NodeHandle &handle, const std::string &paramName, const int rows, const int cols) const
+Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle, const std::string &paramName, const int rows, const int cols) const
 {
     XmlRpc::XmlRpcValue paramValue;
     Eigen::ArrayXXd arrayValue = Eigen::ArrayXXd::Zero(rows, cols);
@@ -100,7 +100,7 @@ Eigen::ArrayXXd SensorCalibrationSynch::readArray(const ros::NodeHandle &handle,
 }
 
 // get measurement from camera
-void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
+void MeasurementModelsSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
     static Eigen::MatrixX2d measurementSet(m_params.sizeOfSet, 2);
     static int count = 0;
@@ -143,7 +143,7 @@ void SensorCalibrationSynch::DoCamera(const sgtdv_msgs::ConeStampedArr::ConstPtr
 }
 
 // get measurement from lidar
-void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
+void MeasurementModelsSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
     static Eigen::MatrixX2d measurementSet(m_params.sizeOfSet, 2);
     static int count = 0;
@@ -185,7 +185,7 @@ void SensorCalibrationSynch::DoLidar(const sgtdv_msgs::Point2DStampedArr::ConstP
     }
 }
 
-geometry_msgs::PointStamped SensorCalibrationSynch::TransformCoords(const geometry_msgs::PointStamped &coordsChildFrame) const
+geometry_msgs::PointStamped MeasurementModelsSynch::TransformCoords(const geometry_msgs::PointStamped &coordsChildFrame) const
 {
     geometry_msgs::PointStamped coordsParentFrame = geometry_msgs::PointStamped();
     try
@@ -199,7 +199,7 @@ geometry_msgs::PointStamped SensorCalibrationSynch::TransformCoords(const geomet
     return coordsParentFrame;
 }
 
-bool SensorCalibrationSynch::DataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords) const 
+bool MeasurementModelsSynch::DataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords) const 
 {
     for (int i = 0; i < m_params.numOfCones; i++)
     {

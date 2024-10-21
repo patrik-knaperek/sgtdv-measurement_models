@@ -16,15 +16,15 @@
 #include <sgtdv_msgs/ConeStampedArr.h>
 #include <sgtdv_msgs/Point2DStampedArr.h>
 
-#include "../include/SensorCalibration.h"
+#include "../include/measurement_models.h"
 
-class SensorCalibrationSynch
+class MeasurementModelsSynch
 {
     public:
-        SensorCalibrationSynch(const ros::NodeHandle &nh);
-        ~SensorCalibrationSynch() = default;
+        MeasurementModelsSynch(const ros::NodeHandle &nh);
+        ~MeasurementModelsSynch() = default;
 
-        struct CalibrationSynchParams
+        struct Params
         {
             std::string fixedFrame;
             int sizeOfSet;
@@ -70,8 +70,8 @@ class SensorCalibrationSynch
         geometry_msgs::PointStamped TransformCoords(const geometry_msgs::PointStamped &coordsChildFrame) const;
         bool DataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measuredCoords) const;
         
-        SensorCalibration m_calibrationObj;
-        CalibrationSynchParams m_params;
+        MeasurementModels m_calibrationObj;
+        Params m_params;
         
         tf::TransformListener m_listener;
 };

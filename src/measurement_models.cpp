@@ -3,22 +3,22 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
-#include "../include/SensorCalibration.h"
+#include "../include/measurement_models.h"
 
 #include <XmlRpcException.h>
 
-SensorCalibration::SensorCalibration()
+MeasurementModels::MeasurementModels()
 {
     m_counter = 0;
 }
 
-SensorCalibration::~SensorCalibration()
+MeasurementModels::~MeasurementModels()
 {
 }
 
-void SensorCalibration::InitOutFiles(const std::string &outFilename)
+void MeasurementModels::InitOutFiles(const std::string &outFilename)
 {
-    std::string pathToPackage = ros::package::getPath("calibration");
+    std::string pathToPackage = ros::package::getPath("measurement_models");
     
     std::string pathToMatrixFileCam = pathToPackage + std::string("/data/" + outFilename + "_camera.csv");
     std::string pathToMatrixFileLid = pathToPackage + std::string("/data/" + outFilename + "_lidar.csv");
@@ -35,7 +35,7 @@ void SensorCalibration::InitOutFiles(const std::string &outFilename)
 
 // compute and export mean, dispersions of measurement and distance between mean of measurement 
 // and real coordinates for each cone using K-Means clustering
-void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const std::string &sensorName)
+void MeasurementModels::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const std::string &sensorName)
 {
     KMeansClustering(measuredCoords);
     VisualizeMeans();
@@ -76,7 +76,7 @@ void SensorCalibration::Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoo
     } 
 }
 
-void SensorCalibration::KMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords)
+void MeasurementModels::KMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords)
 {
     // initialization of means
     m_meansX = m_params.realCoords.col(0);
@@ -104,7 +104,7 @@ void SensorCalibration::KMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d
 }
 
 // asociate points to clusters based on the closest mean
-void SensorCalibration::ClusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements)
+void MeasurementModels::ClusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements)
 {
     double closest;
     size_t closestIdx;
@@ -129,13 +129,13 @@ void SensorCalibration::ClusterAssociation(const Eigen::Ref<const Eigen::MatrixX
 }
 
 // euclidean distance of 2D vectors
-double SensorCalibration::EuclideanDist(const double x1, const double x2, const double y1, const double y2) const
+double MeasurementModels::EuclideanDist(const double x1, const double x2, const double y1, const double y2) const
 {
     return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2)); 
 }
 
 // recomputes new means of clusters, returns rate of shift of the means
-double SensorCalibration::UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
+double MeasurementModels::UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
                                     const Eigen::Ref<const Eigen::MatrixXd> &clusters,
                                     const Eigen::Ref<const Eigen::RowVectorXd> &countClusters) const
 {
@@ -150,7 +150,7 @@ double SensorCalibration::UpdateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
 }
 
 // compute x and y dispersion of cluster
-Eigen::Matrix<double,1,6> SensorCalibration::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
+Eigen::Matrix<double,1,6> MeasurementModels::ComputeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
                                                 const Eigen::Ref<const Eigen::Vector2d> &mean) const
 {
     Eigen::Matrix<double,1,6> disp;
@@ -201,7 +201,7 @@ Eigen::Matrix<double,1,6> SensorCalibration::ComputeDisp(const Eigen::Ref<const 
     return disp;
 }
 
-void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, 6>> &disp) const
+void MeasurementModels::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, 6>> &disp) const
 {
     double offsetX, offsetY;
     for (size_t i = 0; i < m_params.numOfCones; i++)
@@ -217,7 +217,7 @@ void SensorCalibration::UpdateCsv(std::ofstream &csvFile, const Eigen::Ref<const
     }
 }
 
-void SensorCalibration::VisualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &clusterX, 
+void MeasurementModels::VisualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &clusterX, 
                                         const Eigen::Ref<const Eigen::VectorXd> &clusterY, const int clusterSize)
 {
     if (clusterSize == 0) return;
@@ -256,7 +256,7 @@ void SensorCalibration::VisualizeCluster(const Eigen::Ref<const Eigen::VectorXd>
     m_clustersVis.markers.push_back(cluster);
 }
 
-void SensorCalibration::VisualizeMeans()
+void MeasurementModels::VisualizeMeans()
 {
     visualization_msgs::Marker cluster;
     cluster.ns = "MEANS";

@@ -17,15 +17,15 @@
 
 #include "../../SGT_Macros.h"
 
-class SensorCalibration
+class MeasurementModels
 {
     public:
-        SensorCalibration();
-        ~SensorCalibration();
+        MeasurementModels();
+        ~MeasurementModels();
 
         void Do(const Eigen::Ref<const Eigen::MatrixX2d> &measuredCoords, const std::string &sensorName);
 
-        struct CalibrationParams
+        struct Params
         {
             int numOfSensors;
             int numOfCones;
@@ -36,7 +36,7 @@ class SensorCalibration
         };
         
         // Setters
-        void SetParams(const CalibrationParams &params)
+        void SetParams(const Params &params)
         {
             m_params = params;
         };
@@ -62,7 +62,7 @@ class SensorCalibration
         void VisualizeMeans();
         
         ros::Publisher m_logPublisher;
-        CalibrationParams m_params;
+        Params m_params;
         int m_counter;
 
         Eigen::RowVectorXd m_meansX, m_meansY;

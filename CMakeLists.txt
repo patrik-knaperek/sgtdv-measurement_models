@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(calibration)
+project(measurement_models)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -141,7 +141,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(sensor_calibration src/SensorCalibration.cpp src/SensorCalibrationNODE.cpp src/SensorCalibrationSynch.cpp)
+add_executable(${PROJECT_NAME} src/measurement_models.cpp src/measurement_models_node.cpp src/measurement_models_synch.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,7 +154,7 @@ add_executable(sensor_calibration src/SensorCalibration.cpp src/SensorCalibratio
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(sensor_calibration
+target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${Eigen3_INCLUDE_DIRS}
 )
