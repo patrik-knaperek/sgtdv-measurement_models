@@ -5,18 +5,19 @@
 
 #pragma once
 
+/* C++ */
+#include <Eigen/Eigen>
+#include <XmlRpcException.h>
+
+/* ROS */
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PointStamped.h>
 
-#include <math.h>
-#include <Eigen/Eigen>
-#include <XmlRpcException.h>
-
+/* SGT-DV */
 #include <sgtdv_msgs/ConeStampedArr.h>
 #include <sgtdv_msgs/Point2DStampedArr.h>
-
-#include "../include/measurement_models.h"
+#include "measurement_models.h"
 
 class MeasurementModelsSynch
 {

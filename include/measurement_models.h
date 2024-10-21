@@ -5,17 +5,17 @@
 
 #pragma once
 
-#include <iostream>
+/* C++ */
 #include <fstream>
-#include <string>
 #include <Eigen/Eigen>
 
+/* ROS */
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <visualization_msgs/MarkerArray.h>
 
-
-#include "../../SGT_Macros.h"
+/* SGT-DV */
+#include "SGT_Macros.h"
 
 class MeasurementModels
 {

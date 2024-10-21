@@ -3,7 +3,7 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
-#include "../include/measurement_models_synch.h"
+#include "measurement_models_synch.h"
 
 int main(int argc, char** argv)
 {
