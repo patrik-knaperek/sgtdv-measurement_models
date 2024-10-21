@@ -20,13 +20,19 @@
 class MeasurementModels
 {
 public:
-  MeasurementModels();
-  ~MeasurementModels() = default;
-
-  void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
-
   struct Params
   {
+    Params() {};
+    Params(const int num_of_sensors, const int num_of_cones, const int size_of_set, const int size_of_cluster_max,
+          const Eigen::Ref<const Eigen::MatrixXd> &real_coords, const std::string &fixed_frame)
+      : num_of_sensors(num_of_sensors)
+      , num_of_cones(num_of_cones)
+      , size_of_set(size_of_set)
+      , size_of_cluster_max(size_of_cluster_max)
+      , real_coords(real_coords)
+      , fixed_frame(fixed_frame)
+    {};
+
     int num_of_sensors;
     int num_of_cones;
     int size_of_set;
@@ -34,6 +40,12 @@ public:
     Eigen::MatrixXd real_coords;
     std::string fixed_frame;
   };
+
+public:
+  MeasurementModels();
+  ~MeasurementModels() = default;
+
+  void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
   
   // Setters
   void setParams(const Params &params)

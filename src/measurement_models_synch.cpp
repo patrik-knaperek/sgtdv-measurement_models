@@ -3,6 +3,7 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
+#include "SGT_Utils.h"
 #include "measurement_models_synch.h"
 
 MeasurementModelsSynch::MeasurementModelsSynch(ros::NodeHandle &nh)
@@ -15,92 +16,38 @@ MeasurementModelsSynch::MeasurementModelsSynch(ros::NodeHandle &nh)
 
 void MeasurementModelsSynch::loadParams(const ros::NodeHandle &nh)
 {
-  loadParam(nh, "/fixed_frame", &params_.fixed_frame);
+  Utils::loadParam(nh, "/fixed_frame", &params_.fixed_frame);
   int num_of_measurements, num_of_cones;
-  loadParam(nh, "/number_of_measurements", &num_of_measurements);
-  loadParam(nh, "/number_of_cones", &num_of_cones);
+  Utils::loadParam(nh, "/number_of_measurements", &num_of_measurements);
+  Utils::loadParam(nh, "/number_of_cones", &num_of_cones);
   params_.size_of_set = num_of_measurements * num_of_cones;
   params_.num_of_cones = num_of_cones;
   
-  loadParam(nh, "/distance_treshold_x", &params_.dist_th_x);
-  loadParam(nh, "/distance_treshold_y", &params_.dist_th_y);
+  Utils::loadParam(nh, "/distance_treshold_x", &params_.dist_th_x);
+  Utils::loadParam(nh, "/distance_treshold_y", &params_.dist_th_y);
 
   params_.real_coords = Eigen::MatrixX2d::Zero(num_of_cones, 2);
   float x;
-  if (loadParam(nh, "/cone_coords_x", &x))
+  if (Utils::loadParam(nh, "/cone_coords_x", &x))
   {
     params_.real_coords.col(0).setConstant(x);
-    params_.real_coords.col(1) = readArray(nh, "/cone_coords_y", num_of_cones,1);
-    // float y_max, y_min;
-    // loadParam(nh, "/cone_coords_y_max", &y_max);
-    // loadParam(nh, "/cone_coords_y_min", &y_min);
-    // for (int i = 0; i < y_max - y_min + 1; i++)
-    // {
-    //     params_.real_coords(i,0) = x;
-    //     params_.real_coords(i,1) = y_min + i;
-    // }
+    params_.real_coords.col(1) = Utils::loadArray(nh, "/cone_coords_y", num_of_cones,1);
   }
   else
   {
-    params_.real_coords = readArray(nh, "/cone_coords", num_of_cones, 2);
+    params_.real_coords = Utils::loadArray(nh, "/cone_coords", num_of_cones, 2);
   }
   std::cout << "real_coords:\n" << params_.real_coords << std::endl;
   
-  MeasurementModels::Params calibration_params;
-  calibration_params.real_coords = params_.real_coords;
-
-  calibration_params.num_of_cones = num_of_cones;
-  calibration_params.size_of_set = params_.size_of_set;
-  calibration_params.size_of_cluster_max = num_of_measurements * 3;
-  calibration_params.fixed_frame = params_.fixed_frame;
-  loadParam(nh, "/number_of_sensors", &calibration_params.num_of_sensors);
-  obj_.setParams(calibration_params);
+  int num_of_sensors;
+  Utils::loadParam(nh, "/number_of_sensors", &num_of_sensors);
+  obj_.setParams(MeasurementModels::Params(num_of_sensors, num_of_cones, params_.size_of_set, 
+                                          num_of_measurements * 3, params_.real_coords, params_.fixed_frame)
+    );
 
   std::string out_filename;
-  loadParam(nh, "/output_filename", &out_filename);
+  Utils::loadParam(nh, "/output_filename", &out_filename);
   obj_.initOutFiles(out_filename);
-}
-
-// read multidimensional array from parameter server
-Eigen::ArrayXXd MeasurementModelsSynch::readArray(const ros::NodeHandle &handle, const std::string &param_name, 
-                                                  const int rows, const int cols) const
-{
-  XmlRpc::XmlRpcValue param_value;
-  Eigen::ArrayXXd array_value = Eigen::ArrayXXd::Zero(rows, cols);
-  if (loadParam(handle, param_name, &param_value))
-  {
-    try
-    {
-      ROS_ASSERT(param_value.getType() == XmlRpc::XmlRpcValue::TypeArray);
-      for (int i = 0; i < rows; i++)
-      {
-        for (int j = 0; j < cols; j++)
-        {
-          try
-          {
-            std::ostringstream ostr;
-            ostr << param_value[cols * i  + j];
-            std::istringstream istr(ostr.str());
-            istr >> array_value(i, j);
-          }
-          catch(XmlRpc::XmlRpcException &e)
-          {
-            throw e;;
-          }
-          catch(...)
-          {
-            throw;
-          }
-        }
-      }
-    }
-      catch(XmlRpc::XmlRpcException &e)
-      {
-        ROS_ERROR_STREAM("ERROR reading from server: " << e.getMessage() <<
-                        " for " << param_name << "(type: " << param_value.getType() << ")");
-      }
-  }
-  return array_value;
 }
 
 // get measurement from camera

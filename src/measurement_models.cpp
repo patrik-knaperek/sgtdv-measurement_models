@@ -3,9 +3,6 @@
 //Authors: Patrik Knaperek
 /*****************************************************/
 
-/* C++ */
-#include <XmlRpcException.h>
-
 /* Header */
 #include "measurement_models.h"
 
