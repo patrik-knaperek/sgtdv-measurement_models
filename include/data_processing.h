@@ -23,27 +23,25 @@ public:
   struct Params
   {
     Params() {};
-    Params(const int num_of_sensors, const int num_of_cones, const int size_of_set, const int size_of_cluster_max,
-          const Eigen::Ref<const Eigen::MatrixXd> &real_coords, const std::string &fixed_frame)
-      : num_of_sensors(num_of_sensors)
-      , num_of_cones(num_of_cones)
-      , size_of_set(size_of_set)
-      , size_of_cluster_max(size_of_cluster_max)
+    Params(const int n_of_cones, const Eigen::Ref<const Eigen::MatrixXd> &real_coords,
+          const std::string &fixed_frame)
+      : n_of_cones(n_of_cones)
       , real_coords(real_coords)
       , fixed_frame(fixed_frame)
     {};
 
-    int num_of_sensors;
-    int num_of_cones;
-    int size_of_set;
-    int size_of_cluster_max;
+    int n_of_cones;
     Eigen::MatrixXd real_coords;
     std::string fixed_frame;
   };
 
 public:
   DataProcessing() = default;
-  ~DataProcessing() = default;
+  ~DataProcessing()
+  {
+    out_csv_file_cam_.close();
+    out_csv_file_lid_.close();
+  };
 
   void update(const std::vector<Eigen::RowVector2d> &measured_coords, const std::string &sensor_name);
   
@@ -74,7 +72,6 @@ private:
   
   ros::Publisher log_publisher_;
   Params params_;
-  int counter_ = 0;
 
   Eigen::RowVectorXd clusters_size_;
 

@@ -18,32 +18,29 @@ DataAcquisition::DataAcquisition(ros::NodeHandle &nh)
 void DataAcquisition::loadParams(const ros::NodeHandle &nh)
 {
   Utils::loadParam(nh, "/fixed_frame", &params_.fixed_frame);
-  int num_of_measurements, num_of_cones;
+  int num_of_measurements;
   Utils::loadParam(nh, "/number_of_measurements", &num_of_measurements);
-  Utils::loadParam(nh, "/number_of_cones", &num_of_cones);
-  params_.size_of_set = num_of_measurements * num_of_cones;
-  params_.num_of_cones = num_of_cones;
-  
+  Utils::loadParam(nh, "/number_of_cones", &params_.n_of_cones);
+  params_.size_of_set = num_of_measurements * params_.n_of_cones;
+  Utils::loadParam(nh, "/number_of_sensors", &params_.n_of_sensors);
   Utils::loadParam(nh, "/distance_treshold_x", &params_.dist_th_x);
   Utils::loadParam(nh, "/distance_treshold_y", &params_.dist_th_y);
 
-  params_.real_coords = Eigen::MatrixX2d::Zero(num_of_cones, 2);
+  params_.real_coords = Eigen::MatrixX2d::Zero(params_.n_of_cones, 2);
   float x;
   if (Utils::loadParam(nh, "/cone_coords_x", &x))
   {
     params_.real_coords.col(0).setConstant(x);
-    params_.real_coords.col(1) = Utils::loadArray(nh, "/cone_coords_y", num_of_cones,1);
+    params_.real_coords.col(1) = Utils::loadArray(nh, "/cone_coords_y", params_.n_of_cones,1);
   }
   else
   {
-    params_.real_coords = Utils::loadArray(nh, "/cone_coords", num_of_cones, 2);
+    params_.real_coords = Utils::loadArray(nh, "/cone_coords", params_.n_of_cones, 2);
   }
-  std::cout << "real_coords:\n" << params_.real_coords << std::endl;
+  ROS_INFO_STREAM("real_coords:\n" << params_.real_coords);
   
-  int num_of_sensors;
-  Utils::loadParam(nh, "/number_of_sensors", &num_of_sensors);
-  data_processing_obj_.setParams(DataProcessing::Params(num_of_sensors, num_of_cones, params_.size_of_set, 
-                                          num_of_measurements * 3, params_.real_coords, params_.fixed_frame)
+  data_processing_obj_.setParams(
+    DataProcessing::Params(params_.n_of_cones, params_.real_coords, params_.fixed_frame)
   );
   data_processing_obj_.initMeans();
 
@@ -129,6 +126,11 @@ void DataAcquisition::update(std::vector<Eigen::RowVector2d>& measurement_set,
     if (measurement_set.size() == params_.size_of_set)
     {
       data_processing_obj_.update(measurement_set, sensor_name);
+      
+      // data acquisition completed
+      if (++counter_ >= params_.n_of_sensors)
+        ros::shutdown();
+        
       break;
     }
   }
@@ -136,7 +138,7 @@ void DataAcquisition::update(std::vector<Eigen::RowVector2d>& measurement_set,
 
 bool DataAcquisition::dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const
 {
-  for (int i = 0; i < params_.num_of_cones; i++)
+  for (int i = 0; i < params_.n_of_cones; i++)
   {
     if (abs(params_.real_coords(i,0) - measured_coords(0)) < params_.dist_th_x &&
       abs(params_.real_coords(i,1) - measured_coords(1)) < params_.dist_th_y)

@@ -9,13 +9,12 @@
 // initialization of cluster means
 void DataProcessing::initMeans(void)
 {
-  means_.reserve(params_.num_of_cones);
+  means_.reserve(params_.n_of_cones);
 
-  for(size_t i = 0; i < params_.num_of_cones; i++)
+  for(size_t i = 0; i < params_.n_of_cones; i++)
   {
     means_.emplace_back(params_.real_coords.row(i));
   }
-
 }
 
 void DataProcessing::initOutFiles(const std::string &out_filename)
@@ -44,8 +43,8 @@ void DataProcessing::update(const std::vector<Eigen::RowVector2d> &measured_coor
 
   // compute dispersion of clusters
   Eigen::Matrix<double, Eigen::Dynamic, 6> dispersions 
-    = Eigen::Matrix<double, Eigen::Dynamic, 6>::Zero(params_.num_of_cones, 6);
-  for (int i = 0; i < params_.num_of_cones; i++)
+    = Eigen::Matrix<double, Eigen::Dynamic, 6>::Zero(params_.n_of_cones, 6);
+  for (int i = 0; i < params_.n_of_cones; i++)
   {
     const int cluster_size = clusters_[i].size();
     Eigen::MatrixX2d cluster = Eigen::MatrixX2d::Zero(cluster_size,2);
@@ -79,16 +78,16 @@ void DataProcessing::kMeansClustering(const std::vector<Eigen::RowVector2d> &mea
     finished = true;
     
     clusters_.clear();
-    clusters_.reserve(params_.num_of_cones);
+    clusters_.resize(params_.n_of_cones);
 
     clusterAssociation(measured_coords);
 
     const auto mean_shift = updateMeans();
-    if (mean_shift(0) > params_.num_of_cones * 0.01)
+    if (mean_shift(0) > params_.n_of_cones * 0.01)
     {
       finished = false;
     }
-    if (mean_shift(1) > params_.num_of_cones * 0.01)
+    if (mean_shift(1) > params_.n_of_cones * 0.01)
     {
       finished = false;
     }
@@ -105,7 +104,7 @@ void DataProcessing::clusterAssociation(const std::vector<Eigen::RowVector2d> &m
   for (const auto& measurement : measurements)
   {
     closest = std::numeric_limits<double>::max();
-    for (size_t j = 0; j < params_.num_of_cones; j++)
+    for (size_t j = 0; j < params_.n_of_cones; j++)
     {
       dist = (measurement - means_.at(j)).norm();
       if (dist < closest)
@@ -123,7 +122,7 @@ Eigen::Array2d DataProcessing::updateMeans(void)
 {
   Eigen::RowVector2d new_mean, cluster_sum;
   Eigen::Array2d mean_shift = Eigen::Array2d::Zero();
-  for (size_t i = 0; i < params_.num_of_cones; i++)
+  for (size_t i = 0; i < params_.n_of_cones; i++)
   {
     cluster_sum.setZero();
     for (const auto& measurement : clusters_.at(i))
@@ -193,7 +192,7 @@ void DataProcessing::updateCsv(std::ofstream &csv_file, const Eigen::Ref<const E
                                   Eigen::Dynamic, 6>> &disp) const
 {
   double offset_x, offset_y;
-  for (size_t i = 0; i < params_.num_of_cones; i++)
+  for (size_t i = 0; i < params_.n_of_cones; i++)
   {
     offset_x = params_.real_coords(i,0) - means_[i](0);
     offset_y = params_.real_coords(i,1) - means_[i](1);
@@ -224,7 +223,7 @@ void DataProcessing::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &c
   cluster.scale.y = 0.03;
   cluster.color.a = 1.0;
   cluster.points.reserve(cluster_size);
-  cluster.colors.reserve(params_.num_of_cones);
+  cluster.colors.reserve(params_.n_of_cones);
   
   std_msgs::ColorRGBA color;
   color.b = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
@@ -258,8 +257,8 @@ void DataProcessing::visualizeMeans()
   cluster.scale.y = 0.06;
   cluster.color.a = 1.0;
   
-  cluster.points.reserve(params_.num_of_cones);
-  cluster.colors.reserve(params_.num_of_cones);
+  cluster.points.reserve(params_.n_of_cones);
+  cluster.colors.reserve(params_.n_of_cones);
 
   std_msgs::ColorRGBA color;
   color.b = 0.0;

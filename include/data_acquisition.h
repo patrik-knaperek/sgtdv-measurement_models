@@ -40,7 +40,8 @@ private:
   {
     std::string fixed_frame;
     int size_of_set;
-    int num_of_cones;
+    int n_of_cones;
+    int n_of_sensors;
 
     float dist_th_x;
     float dist_th_y;
@@ -53,4 +54,6 @@ private:
   ros::Subscriber camera_sub_, lidar_sub_;
   ros::Publisher cluster_vis_pub_;
   tf::TransformListener listener_;
+
+  int counter_ = 0;
 };
