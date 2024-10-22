@@ -30,9 +30,9 @@ private:
   void cameraCallback(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg);
   void lidarCallback(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg);
 
-  void update(Eigen::Ref<Eigen::MatrixX2d> measurement_set,
-              const std::vector<geometry_msgs::PointStamped> coords_msg_frame, 
-              int count, const std::string& sensor_name);
+  void update(std::vector<Eigen::RowVector2d>& measurement_set,
+              const std::vector<geometry_msgs::PointStamped>& coords_msg_frame, 
+              const std::string& sensor_name);
 
   bool dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
 

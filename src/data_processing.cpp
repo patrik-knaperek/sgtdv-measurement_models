@@ -6,6 +6,18 @@
 /* Header */
 #include "data_processing.h"
 
+// initialization of cluster means
+void DataProcessing::initMeans(void)
+{
+  means_.reserve(params_.num_of_cones);
+
+  for(size_t i = 0; i < params_.num_of_cones; i++)
+  {
+    means_.emplace_back(params_.real_coords.row(i));
+  }
+
+}
+
 void DataProcessing::initOutFiles(const std::string &out_filename)
 {
   std::string path_to_package = ros::package::getPath("measurement_models");
@@ -24,7 +36,7 @@ void DataProcessing::initOutFiles(const std::string &out_filename)
 
 // compute and export mean, dispersions of measurement and distance between mean of measurement 
 // and real coordinates for each cone using K-Means clustering
-void DataProcessing::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, 
+void DataProcessing::update(const std::vector<Eigen::RowVector2d> &measured_coords, 
                               const std::string &sensor_name)
 {
   kMeansClustering(measured_coords);
@@ -35,13 +47,15 @@ void DataProcessing::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_c
     = Eigen::Matrix<double, Eigen::Dynamic, 6>::Zero(params_.num_of_cones, 6);
   for (int i = 0; i < params_.num_of_cones; i++)
   {
-    int cluster_size = clusters_size_(i);
+    const int cluster_size = clusters_[i].size();
     Eigen::MatrixX2d cluster = Eigen::MatrixX2d::Zero(cluster_size,2);
-    cluster.col(0) = clusters_x_.block(0,i, cluster_size,1);
-    cluster.col(1) =  clusters_y_.block(0,i, cluster_size,1);
-    
+
+    for (int j = 0; j < cluster_size; j++)
+    {
+      cluster.row(j) = clusters_[i][j];
+    }
     dispersions.block<1,6>(i,0) = 
-      computeDisp(cluster, Eigen::Vector2d(means_x_(i), means_y_(i)));
+      computeDisp(cluster, means_[i]);
       visualizeCluster(cluster.col(0), cluster.col(1), cluster_size);
   }
 
@@ -56,92 +70,76 @@ void DataProcessing::update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_c
   {
     updateCsv(out_csv_file_lid_, dispersions);
   }
-
-  // data acquisition completed
-  if (++counter_ >= params_.num_of_sensors)
-  {
-    out_csv_file_cam_.close();
-    out_csv_file_lid_.close();
-    ros::shutdown();
-  } 
 }
 
-void DataProcessing::kMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords)
+void DataProcessing::kMeansClustering(const std::vector<Eigen::RowVector2d> &measured_coords)
 {
-  // initialization of means
-  means_x_ = params_.real_coords.col(0);
-  means_y_ = params_.real_coords.col(1);
-
   static bool finished = false;
   do {
     finished = true;
-    clusters_x_ =  clusters_y_ = Eigen::MatrixXd::Zero(params_.size_of_cluster_max, params_.num_of_cones);
-    clusters_size_ = Eigen::RowVectorXd::Zero(params_.num_of_cones);
+    
+    clusters_.clear();
+    clusters_.reserve(params_.num_of_cones);
 
     clusterAssociation(measured_coords);
 
-    if (updateMeans(means_x_, clusters_x_, clusters_size_) > params_.num_of_cones * 0.01)
+    const auto mean_shift = updateMeans();
+    if (mean_shift(0) > params_.num_of_cones * 0.01)
     {
       finished = false;
     }
-    if (updateMeans(means_y_, clusters_y_, clusters_size_) > params_.num_of_cones * 0.01)
+    if (mean_shift(1) > params_.num_of_cones * 0.01)
     {
       finished = false;
     }
-    ROS_INFO_STREAM("new means\n" << means_x_ << "\n" << means_y_);
   } while (!finished);
   ROS_INFO("K-Means completed");
 }
 
 // asociate points to clusters based on the closest mean
-void DataProcessing::clusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements)
+void DataProcessing::clusterAssociation(const std::vector<Eigen::RowVector2d> &measurements)
 {
   double closest;
   size_t closest_idx;
   double dist;
-  for (size_t i = 0; i < params_.size_of_set; i++)
+  for (const auto& measurement : measurements)
   {
     closest = std::numeric_limits<double>::max();
     for (size_t j = 0; j < params_.num_of_cones; j++)
     {
-      dist = euclideanDist(measurements(i,0), means_x_(j), measurements(i,1), means_y_(j));
+      dist = (measurement - means_.at(j)).norm();
       if (dist < closest)
       {
         closest = dist;
         closest_idx = j;
       }
     }
-    clusters_x_(clusters_size_(closest_idx), closest_idx) = measurements(i,0);
-    clusters_y_(clusters_size_(closest_idx)++, closest_idx) = measurements(i,1);
+    clusters_.at(closest_idx).push_back(measurement);
   }
-  ROS_INFO_STREAM("clusters X:\n" << clusters_size_ << "\n" << clusters_x_);
-  ROS_INFO_STREAM("clusters Y:\n" << clusters_size_ << "\n" << clusters_y_);
-}
-
-// euclidean distance of 2D vectors
-double DataProcessing::euclideanDist(const double x1, const double x2, const double y1, const double y2) const
-{
-  return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2)); 
 }
 
 // recomputes new means of clusters, returns rate of shift of the means
-double DataProcessing::updateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
-                                      const Eigen::Ref<const Eigen::MatrixXd> &clusters,
-                                      const Eigen::Ref<const Eigen::RowVectorXd> &count_clusters) const
+Eigen::Array2d DataProcessing::updateMeans(void)
 {
-  double new_mean, mean_shift = 0;
+  Eigen::RowVector2d new_mean, cluster_sum;
+  Eigen::Array2d mean_shift = Eigen::Array2d::Zero();
   for (size_t i = 0; i < params_.num_of_cones; i++)
   {
-    new_mean = clusters.col(i).sum() / count_clusters(i);
-    mean_shift += std::abs(means(i) - new_mean);
-    means(i) = new_mean;
+    cluster_sum.setZero();
+    for (const auto& measurement : clusters_.at(i))
+    {
+      cluster_sum += measurement;
+    }
+    new_mean = cluster_sum / clusters_.at(i).size();
+    mean_shift += (means_.at(i) - new_mean).array().abs();
+    means_.at(i) = new_mean;
   }
   return mean_shift;
 }
 
 // compute x and y dispersion of cluster
 Eigen::Matrix<double,1,6> DataProcessing::computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster, 
-                                                        const Eigen::Ref<const Eigen::Vector2d> &mean) const
+                                                        const Eigen::Ref<const Eigen::RowVector2d> &mean) const
 {
   Eigen::Matrix<double,1,6> disp;
   Eigen::ArrayXd diff_x, diff_y, diff_r, diff_phi;
@@ -197,13 +195,13 @@ void DataProcessing::updateCsv(std::ofstream &csv_file, const Eigen::Ref<const E
   double offset_x, offset_y;
   for (size_t i = 0; i < params_.num_of_cones; i++)
   {
-    offset_x = params_.real_coords(i,0) - means_x_(i);
-    offset_y = params_.real_coords(i,1) - means_y_(i);
+    offset_x = params_.real_coords(i,0) - means_[i](0);
+    offset_y = params_.real_coords(i,1) - means_[i](1);
 
     // fill matrix row (CSV format): real_x, real_y, measured_mean_x, measured_mean_y, offset_x, offset_y, 
     // cov_xx, cov_yy, cov_xy, cov_rr, cov_tt, cov_rt (t - theta angle)
-    csv_file << params_.real_coords(i,0) << "," << params_.real_coords(i,1) << "," << means_x_(i) << ","
-            << means_y_(i) << "," << offset_x << "," << offset_y << "," 
+    csv_file << params_.real_coords(i,0) << "," << params_.real_coords(i,1) << "," << means_[i](0) << ","
+            << means_[i](1) << "," << offset_x << "," << offset_y << "," 
             << disp(i,0) << "," << disp(i,1) << "," << disp(i,2) << ","
             << disp(i,3) << "," << disp(i,4) << "," << disp(i,5) << ";" << std::endl;
   }
@@ -272,10 +270,10 @@ void DataProcessing::visualizeMeans()
   geometry_msgs::Point point;
   point.z = 0.01;
 
-  for (int i = 0; i < params_.num_of_cones; i++)
+  for (const auto& mean : means_)
   {
-    point.x = means_x_(i);
-    point.y = means_y_(i);
+    point.x = mean(0);
+    point.y = mean(1);
     cluster.points.push_back(point);
     cluster.colors.push_back(color);
   }

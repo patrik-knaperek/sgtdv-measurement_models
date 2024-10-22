@@ -45,12 +45,13 @@ public:
   DataProcessing() = default;
   ~DataProcessing() = default;
 
-  void update(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords, const std::string &sensor_name);
+  void update(const std::vector<Eigen::RowVector2d> &measured_coords, const std::string &sensor_name);
   
   void setParams(const Params &params)
   {
     params_ = params;
   };
+  void initMeans(void);
   void initOutFiles(const std::string &out_filename);
   void setClusterPub(const ros::Publisher &cluster_vis_pub)
   {
@@ -58,14 +59,11 @@ public:
   };
 
 private:
-  void kMeansClustering(const Eigen::Ref<const Eigen::MatrixX2d> &measured_coords);
-  void clusterAssociation(const Eigen::Ref<const Eigen::MatrixX2d> &measurements);
-  double euclideanDist(const double x1, const double x2, const double y1, const double y2) const;
-  double updateMeans(Eigen::Ref<Eigen::RowVectorXd> means,
-                    const Eigen::Ref<const Eigen::MatrixXd> &clusters,
-                    const Eigen::Ref<const Eigen::RowVectorXd> &count_clusters) const;
-                    Eigen::Matrix<double,1,6> computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster,
-                    const Eigen::Ref<const Eigen::Vector2d> &mean) const;
+  void kMeansClustering(const std::vector<Eigen::RowVector2d> &measured_coords);
+  void clusterAssociation(const std::vector<Eigen::RowVector2d> &measurements);
+  Eigen::Array2d updateMeans(void);
+  Eigen::Matrix<double,1,6> computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster,
+  const Eigen::Ref<const Eigen::RowVector2d> &mean) const;
   void updateCsv(std::ofstream &csv_file, const Eigen::Ref<const Eigen::Matrix<double, 
                 Eigen::Dynamic, 6>> &disp) const;
 
@@ -78,9 +76,10 @@ private:
   Params params_;
   int counter_ = 0;
 
-  Eigen::RowVectorXd means_x_, means_y_;
-  Eigen::MatrixXd clusters_x_, clusters_y_;
   Eigen::RowVectorXd clusters_size_;
+
+  std::vector<Eigen::RowVector2d> means_;
+  std::vector<std::vector<Eigen::RowVector2d>> clusters_;
 
   std::ofstream out_csv_file_lid_;
   std::ofstream out_csv_file_cam_;

@@ -44,7 +44,8 @@ void DataAcquisition::loadParams(const ros::NodeHandle &nh)
   Utils::loadParam(nh, "/number_of_sensors", &num_of_sensors);
   data_processing_obj_.setParams(DataProcessing::Params(num_of_sensors, num_of_cones, params_.size_of_set, 
                                           num_of_measurements * 3, params_.real_coords, params_.fixed_frame)
-    );
+  );
+  data_processing_obj_.initMeans();
 
   std::string out_filename;
   Utils::loadParam(nh, "/output_filename", &out_filename);
@@ -54,12 +55,11 @@ void DataAcquisition::loadParams(const ros::NodeHandle &nh)
 // get measurement from camera
 void DataAcquisition::cameraCallback(const sgtdv_msgs::ConeStampedArr::ConstPtr &msg)
 {
-  static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
-  static int count = 0;
+  static std::vector<Eigen::RowVector2d> measurement_set;
 
-  if (msg->cones.size() == 0 || count >= params_.size_of_set) return;
+  if (msg->cones.size() == 0 || measurement_set.size() >= params_.size_of_set) return;
 
-  ROS_INFO_STREAM("collected measurements from camera: " << count);
+  ROS_INFO_STREAM("collected measurements from camera: " << measurement_set.size());
   
   std::vector<geometry_msgs::PointStamped> coords_msg_frame;
   for (const auto& cone : msg->cones)
@@ -75,18 +75,17 @@ void DataAcquisition::cameraCallback(const sgtdv_msgs::ConeStampedArr::ConstPtr 
     coords_msg_frame.emplace_back(point);
   }
 
-  update(measurement_set, coords_msg_frame, count, "camera");
+  update(measurement_set, coords_msg_frame, "camera");
 }
 
 // get measurement from lidar
 void DataAcquisition::lidarCallback(const sgtdv_msgs::Point2DStampedArr::ConstPtr &msg)
 {
-  static Eigen::MatrixX2d measurement_set(params_.size_of_set, 2);
-  static int count = 0;
+  static std::vector<Eigen::RowVector2d> measurement_set;
   
-  if (msg->points.size() == 0 || count >= params_.size_of_set) return;
+  if (msg->points.size() == 0 || measurement_set.size() >= params_.size_of_set) return;
 
-  std::cout << "collected measurements from lidar: " << count << std::endl;
+  std::cout << "collected measurements from lidar: " << measurement_set.size() << std::endl;
 
   std::vector<geometry_msgs::PointStamped> coords_msg_frame;
   for (const auto& cone : msg->points)
@@ -102,13 +101,13 @@ void DataAcquisition::lidarCallback(const sgtdv_msgs::Point2DStampedArr::ConstPt
     coords_msg_frame.emplace_back(point);
   }
 
-  update(measurement_set, coords_msg_frame, count, "lidar");
+  update(measurement_set, coords_msg_frame, "lidar");
 }
 
 // transform coordinates and add to the measurement set or send to data processing object
-void DataAcquisition::update(Eigen::Ref<Eigen::MatrixX2d> measurement_set,
-            const std::vector<geometry_msgs::PointStamped> coords_msg_frame, 
-            int count, const std::string& sensor_name)
+void DataAcquisition::update(std::vector<Eigen::RowVector2d>& measurement_set,
+                              const std::vector<geometry_msgs::PointStamped>& coords_msg_frame, 
+                              const std::string& sensor_name)
 {
   geometry_msgs::PointStamped coords_fixed_frame;
   for (const auto& point : coords_msg_frame)
@@ -123,11 +122,11 @@ void DataAcquisition::update(Eigen::Ref<Eigen::MatrixX2d> measurement_set,
     // add new measurement to the set
     if (dataVerification(measured_coords))
     {
-      measurement_set.row(count++) = measured_coords;
+      measurement_set.emplace_back(measured_coords);
     }
 
     // send completed set to the data processing object
-    if (count == params_.size_of_set)
+    if (measurement_set.size() == params_.size_of_set)
     {
       data_processing_obj_.update(measurement_set, sensor_name);
       break;
