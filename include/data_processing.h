@@ -65,10 +65,8 @@ private:
   void updateCsv(std::ofstream &csv_file, const Eigen::Ref<const Eigen::Matrix<double, 
                 Eigen::Dynamic, 6>> &disp) const;
 
-  void visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &cluster_x, 
-                        const Eigen::Ref<const Eigen::VectorXd> &cluster_y,
-                        const int count_cluster);
-  void visualizeMeans();
+  void initClusterMarkers(void);
+  void initMeansMarkers(void);
   
   ros::Publisher log_publisher_;
   Params params_;

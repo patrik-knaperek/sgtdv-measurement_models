@@ -26,11 +26,19 @@ void DataProcessing::initOutFiles(const std::string &out_filename)
   
   out_csv_file_cam_.open(path_to_matrix_file_cam, std::ios::app);
   if (!out_csv_file_cam_.is_open())
+  {
     ROS_ERROR_STREAM("Could not open file " << path_to_matrix_file_cam << std::endl);
+    ros::shutdown();
+    return;
+  }
 
   out_csv_file_lid_.open(path_to_matrix_file_lid, std::ios::app);
   if (!out_csv_file_lid_.is_open())
+  {
     ROS_ERROR_STREAM("Could not open file " << path_to_matrix_file_lid << std::endl);
+    ros::shutdown();
+    return;
+  }
 }
 
 // compute and export mean, dispersions of measurement and distance between mean of measurement 
@@ -39,7 +47,7 @@ void DataProcessing::update(const std::vector<Eigen::RowVector2d> &measured_coor
                               const std::string &sensor_name)
 {
   kMeansClustering(measured_coords);
-  visualizeMeans();
+  initMeansMarkers();
 
   // compute dispersion of clusters
   Eigen::Matrix<double, Eigen::Dynamic, 6> dispersions 
@@ -55,9 +63,8 @@ void DataProcessing::update(const std::vector<Eigen::RowVector2d> &measured_coor
     }
     dispersions.block<1,6>(i,0) = 
       computeDisp(cluster, means_[i]);
-      visualizeCluster(cluster.col(0), cluster.col(1), cluster_size);
   }
-
+  initClusterMarkers();
   cluster_vis_pub_.publish(clusters_msg_);
 
   // export CSV data
@@ -206,45 +213,46 @@ void DataProcessing::updateCsv(std::ofstream &csv_file, const Eigen::Ref<const E
   }
 }
 
-void DataProcessing::visualizeCluster(const Eigen::Ref<const Eigen::VectorXd> &cluster_x, 
-                                        const Eigen::Ref<const Eigen::VectorXd> &cluster_y, const int cluster_size)
+void DataProcessing::initClusterMarkers(void)
 {
-  if (cluster_size == 0) return;
-  
-  static int seq = 1;
-  visualization_msgs::Marker cluster;
-  cluster.ns = "CLUSTER " + std::to_string(seq);
-  cluster.header.seq = seq++;
-  cluster.header.frame_id = params_.fixed_frame;
-  
-  cluster.type = visualization_msgs::Marker::POINTS;
-  cluster.action = visualization_msgs::Marker::ADD;
-  cluster.scale.x = 0.03;
-  cluster.scale.y = 0.03;
-  cluster.color.a = 1.0;
-  cluster.points.reserve(cluster_size);
-  cluster.colors.reserve(params_.n_of_cones);
-  
-  std_msgs::ColorRGBA color;
-  color.b = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-  color.r = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-  color.g = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-  color.a = 1.0;
-
-  geometry_msgs::Point point;
-  point.z = 0.0;
-
-  for (int i = 0; i < cluster_size; i++)
+  for (const auto& cluster : clusters_)
   {
-    point.x = cluster_x(i);
-    point.y = cluster_y(i);
-    cluster.points.push_back(point);
-    cluster.colors.push_back(color);
+    if (cluster.size() == 0) return;
+    
+    static int seq = 1;
+    visualization_msgs::Marker cluster_marker;
+    cluster_marker.ns = "CLUSTER " + std::to_string(seq);
+    cluster_marker.header.seq = seq++;
+    cluster_marker.header.frame_id = params_.fixed_frame;
+    
+    cluster_marker.type = visualization_msgs::Marker::POINTS;
+    cluster_marker.action = visualization_msgs::Marker::ADD;
+    cluster_marker.scale.x = 0.03;
+    cluster_marker.scale.y = 0.03;
+    cluster_marker.color.a = 1.0;
+    cluster_marker.points.reserve(cluster.size());
+    cluster_marker.colors.reserve(params_.n_of_cones);
+    
+    std_msgs::ColorRGBA color;
+    color.b = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    color.r = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    color.g = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    color.a = 1.0;
+
+    geometry_msgs::Point point;
+
+    for (const auto& c : cluster)
+    {
+      point.x = c[0];
+      point.y = c[1];
+      cluster_marker.points.push_back(point);
+      cluster_marker.colors.push_back(color);
+    }
+    clusters_msg_.markers.push_back(cluster_marker);
   }
-  clusters_msg_.markers.push_back(cluster);
 }
 
-void DataProcessing::visualizeMeans()
+void DataProcessing::initMeansMarkers()
 {
   visualization_msgs::Marker cluster;
   cluster.ns = "MEANS";
