@@ -34,7 +34,7 @@ private:
               const std::vector<geometry_msgs::PointStamped>& coords_msg_frame, 
               const std::string& sensor_name);
 
-  bool dataVerification(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
+  bool distanceValidation(const Eigen::Ref<const Eigen::RowVector2d> &measured_coords) const;
 
   struct Params
   {

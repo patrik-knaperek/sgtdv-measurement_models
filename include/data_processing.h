@@ -39,18 +39,18 @@ public:
   DataProcessing() = default;
   ~DataProcessing()
   {
-    out_csv_file_cam_.close();
-    out_csv_file_lid_.close();
+    camera_log_.close();
+    lidar_log_.close();
   };
 
-  void update(const std::vector<Eigen::RowVector2d> &measured_coords, const std::string &sensor_name);
+  void process_data(const std::vector<Eigen::RowVector2d> &measured_coords, const std::string &sensor_name);
   
   void setParams(const Params &params)
   {
     params_ = params;
   };
   void initMeans(void);
-  void initOutFiles(const std::string &out_filename);
+  void initLogFiles(const std::string &out_filename);
   void setClusterPub(const ros::Publisher &cluster_vis_pub)
   {
     cluster_vis_pub_ = cluster_vis_pub;
@@ -60,7 +60,7 @@ private:
   void kMeansClustering(const std::vector<Eigen::RowVector2d> &measured_coords);
   void clusterAssociation(const std::vector<Eigen::RowVector2d> &measurements);
   Eigen::Array2d updateMeans(void);
-  Eigen::Matrix<double,1,6> computeDisp(const Eigen::Ref<const Eigen::MatrixX2d> &cluster,
+  Eigen::Matrix<double,1,6> computeCov(const Eigen::Ref<const Eigen::MatrixX2d> &cluster,
   const Eigen::Ref<const Eigen::RowVector2d> &mean) const;
   void updateCsv(std::ofstream &csv_file, const Eigen::Ref<const Eigen::Matrix<double, 
                 Eigen::Dynamic, 6>> &disp) const;
@@ -76,8 +76,8 @@ private:
   std::vector<Eigen::RowVector2d> means_;
   std::vector<std::vector<Eigen::RowVector2d>> clusters_;
 
-  std::ofstream out_csv_file_lid_;
-  std::ofstream out_csv_file_cam_;
+  std::ofstream lidar_log_;
+  std::ofstream camera_log_;
 
   ros::Publisher cluster_vis_pub_;
   visualization_msgs::MarkerArray clusters_msg_;
