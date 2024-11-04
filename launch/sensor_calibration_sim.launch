@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <rosparam command="load" file="$(find calibration)/params/sensor_calibration_sim.yaml"/>
-    <rosparam command="load" file="$(find calibration)/params/sensor_model_sim_1_camera.yaml"/>
-    <rosparam command="load" file="$(find calibration)/params/sensor_model_sim_1_lidar.yaml"/>
-
-    <node pkg="fusion_sim_interface" type="fusion_sim_interface" name="fusionSimInterface" output="screen"/>
-    <node pkg="calibration" type="sensor_calibration" name="sensor_calibration" output="screen"/>
-</launch>
