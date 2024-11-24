@@ -7,8 +7,8 @@
 #include "data_acquisition.h"
 
 DataAcquisition::DataAcquisition(ros::NodeHandle &nh)
-  : camera_sub_(nh.subscribe("/camera_cones", 1, &DataAcquisition::cameraCallback, this))
-  , lidar_sub_(nh.subscribe("/lidar_cones", 1, &DataAcquisition::lidarCallback, this))
+  : camera_sub_(nh.subscribe("/camera/cones", 1, &DataAcquisition::cameraCallback, this))
+  , lidar_sub_(nh.subscribe("/lidar/cones", 1, &DataAcquisition::lidarCallback, this))
   , cluster_vis_pub_(nh.advertise<visualization_msgs::MarkerArray>("clusters_visualize", 1, true))
 {   
   loadParams(nh);
